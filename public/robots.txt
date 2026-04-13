@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nomu-oneq.vercel.app/sitemap.xml
