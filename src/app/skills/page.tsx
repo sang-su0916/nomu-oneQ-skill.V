@@ -93,6 +93,52 @@ const SKILLS = [
     accentText: "#7f1d1d",
   },
   {
+    id: "capital-gains-tax",
+    emoji: "🏘️",
+    title: "양도소득세",
+    subtitle: "부동산 5모드 (차익·장특공·비과세·세액·종합)",
+    description:
+      "소득세법 §94·§95·§103·§104·시행령 §154 기준. 1세대1주택 12억 비과세·고가주택 부분과세·장특공 거주10년+보유10년 최대 80% 특례·단기보유 중과 반영.",
+    triggers: [
+      "양도세",
+      "양도소득세",
+      "1세대1주택",
+      "장특공",
+      "비과세 12억",
+      "단기보유 중과",
+      "거주10년",
+    ],
+    triggerExample: "11억에 판 주택, 5년 보유·2년 거주, 1세대1주택인데 비과세?",
+    resultExample:
+      "12억 이하 + 요건 충족 → 전액 비과세. 15억이면 3억 초과분만 과세 (6천만)",
+    source: "소득세법 §94·§95·§103·§104, 시행령 §154",
+    accentColor: "#ecfdf5",
+    accentText: "#064e3b",
+  },
+  {
+    id: "year-end-settlement",
+    emoji: "📋",
+    title: "연말정산",
+    subtitle: "2026 귀속 간이 계산 + 변경사항",
+    description:
+      "2026 귀속 기준 간이 연말정산 — 근로소득공제·인적공제·자녀세액공제(25/30/40만 인상)·연금저축·월세 확대·결혼세액공제·신용카드 전략 비교까지.",
+    triggers: [
+      "연말정산",
+      "13월의 월급",
+      "환급",
+      "세액공제",
+      "자녀세액공제",
+      "월세 세액공제",
+      "결혼세액공제",
+    ],
+    triggerExample:
+      "총급여 6천만, 자녀 1명, 연금저축 600만 납입했는데 환급 얼마?",
+    resultExample: "결정세액 286만 - 기납부 400만 = 환급 114만",
+    source: "소득세법 §47·§55·§59·§59의2·§59의3·시행령",
+    accentColor: "#fdf2f8",
+    accentText: "#831843",
+  },
+  {
     id: "severance-pay",
     emoji: "💼",
     title: "퇴직금 계산",
@@ -861,7 +907,7 @@ export default function SkillsPage() {
         {/* Skill Cards */}
         <section className="skills-grid-section">
           <h2 className="skills-grid-title">
-            22개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 4 · 법무 1 · 경영 7)
+            24개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 6 · 법무 1 · 경영 7)
           </h2>
           <p className="skills-grid-subtitle">
             키워드를 포함한 질문을 입력하면 해당 스킬이 자동으로 활성화됩니다.

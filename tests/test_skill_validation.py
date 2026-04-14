@@ -582,10 +582,10 @@ SCENARIOS = [
         "args": ["estimation", "--interim-taxable-income", "150000000", "--current-period-months", "6"],
         "assert": lambda r: (
             r["annualized_taxable"] == 300000000
-            and r["annualized_tax"] == 37000000
-            and r["interim_payment"] == 18500000
+            and r["annualized_tax"] == 40000000
+            and r["interim_payment"] == 20000000
         ),
-        "desc": "estimation 중간과세표준 1.5억·6월 → 연환산 3억, 산출세액 3700만, 납부 1850만",
+        "desc": "estimation 중간과세표준 1.5억·6월 → 연환산 3억, 산출세액 4000만 (2026 개정 10%/20%), 납부 2000만",
     },
     {
         "id": "CIP-04",
@@ -671,6 +671,108 @@ SCENARIOS = [
             and r["exempt_from_withholding"] is True
         ),
         "desc": "일용 일급 15만 이하 → 비과세 (total_per_day = 0)",
+    },
+    # capital-gains-tax (세무 — 부동산 양도세)
+    {
+        "id": "CGT-01",
+        "skill": "capital-gains-tax",
+        "args": [
+            "calculate-gain",
+            "--sale-price", "1500000000",
+            "--acquisition-price", "800000000",
+            "--necessary-expense", "50000000",
+        ],
+        "assert": lambda r: r["capital_gain"] == 650000000,
+        "desc": "양도차익: 15억 - 8억 - 5천만 = 6.5억",
+    },
+    {
+        "id": "CGT-02",
+        "skill": "capital-gains-tax",
+        "args": [
+            "long-term-deduction",
+            "--capital-gain", "650000000",
+            "--holding-years", "10",
+            "--is-one-house",
+            "--residence-years", "10",
+        ],
+        "assert": lambda r: r["deduction_rate"] == 0.80 and r["deduction_amount"] == 520000000,
+        "desc": "1세대1주택 특례 보유10·거주10 → 80% (표2 40+표3 40), 6.5억×0.8=5.2억",
+    },
+    {
+        "id": "CGT-03",
+        "skill": "capital-gains-tax",
+        "args": [
+            "one-house-exemption",
+            "--sale-price", "1100000000",
+            "--holding-years", "5",
+            "--residence-years", "2",
+        ],
+        "assert": lambda r: r["exempt_fully"] is True and r["taxable_gain"] == 0,
+        "desc": "1세대1주택 11억·5년 보유 → 전액 비과세",
+    },
+    {
+        "id": "CGT-04",
+        "skill": "capital-gains-tax",
+        "args": [
+            "one-house-exemption",
+            "--sale-price", "1500000000",
+            "--holding-years", "10",
+            "--capital-gain", "300000000",
+        ],
+        "assert": lambda r: r["exempt_fully"] is False and r["taxable_gain"] == 60000000,
+        "desc": "1세대1주택 15억 고가주택 부분과세 3억×(15-12)/15 = 6천만",
+    },
+    {
+        "id": "CGT-05",
+        "skill": "capital-gains-tax",
+        "args": [
+            "long-term-deduction",
+            "--capital-gain", "100000000",
+            "--holding-years", "10",
+        ],
+        "assert": lambda r: r["deduction_rate"] == 0.16,
+        "desc": "일반 표1 보유 10년 → (10-2)×2%p = 16%",
+    },
+    # year-end-settlement (세무 — 2026 귀속)
+    {
+        "id": "YES-01",
+        "skill": "year-end-settlement",
+        "args": ["calculate", "--total-salary", "50000000", "--withheld-tax", "1000000"],
+        "assert": lambda r: r["final_tax"] > 0 and r["total_salary"] == 50000000,
+        "desc": "연말정산 기본 로직: 총급여 5천만·자녀 0명 → 결정세액 양수",
+    },
+    {
+        "id": "YES-02",
+        "skill": "year-end-settlement",
+        "args": [
+            "calculate",
+            "--total-salary", "60000000",
+            "--dependents", "1",
+            "--children-age-8-20", "1",
+            "--pension-savings", "6000000",
+            "--withheld-tax", "4000000",
+        ],
+        "assert": lambda r: r["refund_or_additional"] > 0,
+        "desc": "연말정산 환급: 총급여 6천만·부양 1·자녀 1·연금 600만·기납부 400만 → 환급",
+    },
+    {
+        "id": "YES-03",
+        "skill": "year-end-settlement",
+        "args": [
+            "calculate",
+            "--total-salary", "50000000",
+            "--children-age-8-20", "3",
+            "--withheld-tax", "1000000",
+        ],
+        "assert": lambda r: r["tax_credits"]["child_tax_credit"] == 950000,
+        "desc": "자녀세액공제 3명 = 25만+30만+40만 = 95만 (2026 인상)",
+    },
+    {
+        "id": "YES-04",
+        "skill": "year-end-settlement",
+        "args": ["deduction-table"],
+        "assert": lambda r: len(r.get("items", [])) >= 10,
+        "desc": "deduction-table 최소 10개 공제 항목 포함",
     },
 ]
 
