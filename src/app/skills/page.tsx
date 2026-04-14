@@ -135,6 +135,22 @@ const SKILLS = [
     accentText: "#166534",
   },
   {
+    id: "nda-review",
+    emoji: "🤐",
+    title: "NDA(비밀유지계약) 검토",
+    subtitle: "필수 10조항 + 독소 5조항 스캔",
+    description:
+      "NDA 텍스트를 넣으면 부정경쟁방지법 §2 영업비밀 3요건을 기준으로 필수 조항을 체크하고, 과도한 위약벌·영구기간 등 독소 조항을 ⚠️/❌ 로 표시합니다.",
+    triggers: ["NDA", "비밀유지", "비밀유지계약", "영업비밀", "non-disclosure"],
+    triggerExample: "첨부한 NDA 검토해줘. 내가 정보 수령 당사자야.",
+    resultExample:
+      "✅ 10개 중 8개 충족 / ⚠️ 비밀유지 기간 무기한 (합리적 한도 필요) / ❌ 위약벌 5억 (민법 §398 감액 대상)",
+    source:
+      "https://github.com/sang-su0916/lbiz-ai-kit/tree/main/skills/nda-review",
+    accentColor: "#fae8ff",
+    accentText: "#701a75",
+  },
+  {
     id: "minimum-wage",
     emoji: "💰",
     title: "최저임금 위반 체크",
@@ -589,7 +605,7 @@ export default function SkillsPage() {
             <p>
               한국 비즈니스 도메인(노무·세무·법무·경영)의 계산·판정·검토를
               <br />
-              Claude가 정확하게 수행하도록 훈련된 11개 스킬 모음입니다.
+              Claude가 정확하게 수행하도록 훈련된 12개 스킬 모음입니다.
             </p>
           </div>
         </section>
@@ -648,7 +664,7 @@ export default function SkillsPage() {
         {/* Skill Cards */}
         <section className="skills-grid-section">
           <h2 className="skills-grid-title">
-            11개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 1)
+            12개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 1 · 법무 1)
           </h2>
           <p className="skills-grid-subtitle">
             키워드를 포함한 질문을 입력하면 해당 스킬이 자동으로 활성화됩니다.
