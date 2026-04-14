@@ -494,6 +494,56 @@ SCENARIOS = [
         "assert": lambda r: r["cagr"] == 21.00,
         "desc": "추세: 1억→1.21억 2년 → CAGR 21.00%",
     },
+    # preliminary-closing (경영 — 월별·분기별 가결산)
+    {
+        "id": "PC-01",
+        "skill": "preliminary-closing",
+        "args": [
+            "monthly",
+            "--revenue", "100000000", "--cogs", "60000000", "--sga", "25000000",
+        ],
+        "assert": lambda r: r["operating_income"] == 15000000 and r["margins"]["gross_margin_pct"] == 40.00,
+        "desc": "monthly 매출 1억·원가 6천만·판관비 2.5천만 → 영업이익 1500만, 매출총이익률 40%",
+    },
+    {
+        "id": "PC-02",
+        "skill": "preliminary-closing",
+        "args": [
+            "monthly",
+            "--revenue", "100000000", "--cogs", "60000000", "--sga", "25000000",
+            "--interest-expense", "2000000",
+            "--estimated-tax-rate", "0.2",
+        ],
+        "assert": lambda r: r["estimated_tax"] == 2600000 and r["net_income"] == 10400000,
+        "desc": "monthly 세율 0.2·세전 1300만 → 법인세 260만·당기순이익 1040만",
+    },
+    {
+        "id": "PC-03",
+        "skill": "preliminary-closing",
+        "args": [
+            "ytd",
+            "--ytd-revenue", "100000000", "--ytd-cogs", "60000000", "--ytd-sga", "25000000",
+            "--months-elapsed", "6",
+        ],
+        "assert": lambda r: r["annualized"]["revenue"] == 200000000,
+        "desc": "ytd 6개월 매출 1억 → 연환산 매출 2억",
+    },
+    {
+        "id": "PC-04",
+        "skill": "preliminary-closing",
+        "args": [
+            "target-vs-actual",
+            "--target-revenue", "1200000000", "--actual-revenue", "500000000",
+            "--target-operating-income", "120000000", "--actual-operating-income", "60000000",
+            "--target-net-income", "90000000", "--actual-net-income", "45000000",
+            "--months-elapsed", "6",
+        ],
+        "assert": lambda r: (
+            r["items"]["revenue"]["achievement_pct"] == 41.67
+            and "저조" in r["items"]["revenue"]["flag"]
+        ),
+        "desc": "target-vs-actual 목표 1.2억·실적 5천만·6개월 → 달성률 41.67%·flag 저조",
+    },
     {
         "id": "FST-04",
         "skill": "financial-statement-trend",

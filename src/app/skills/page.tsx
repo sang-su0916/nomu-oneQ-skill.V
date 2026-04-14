@@ -294,6 +294,30 @@ const SKILLS = [
     accentText: "#134e4a",
   },
   {
+    id: "preliminary-closing",
+    emoji: "📅",
+    title: "가결산",
+    subtitle: "월별·누적·연환산 추정",
+    description:
+      "기중 수치로 연말 손익 추정. 월별 단월·YTD 누적·연환산·목표달성률·결산조정 체크리스트 4모드. 법인세 중간예납(§63) 가결산 방식에 부합.",
+    triggers: [
+      "가결산",
+      "월결산",
+      "중간결산",
+      "연환산",
+      "목표달성률",
+      "추정결산",
+    ],
+    triggerExample:
+      "6월까지 매출 5억, 원가 3억, 판관비 1억이면 연말 예상 순이익?",
+    resultExample:
+      "YTD 영업이익 1억 → 연환산 2억, 세전 1.8억 · 추정 법인세 3.6천만 · 순이익 1.44억",
+    source:
+      "https://github.com/sang-su0916/lbiz-ai-kit/tree/main/skills/preliminary-closing",
+    accentColor: "#fef2f2",
+    accentText: "#7f1d1d",
+  },
+  {
     id: "financial-diagnosis",
     emoji: "🏥",
     title: "재무진단 종합",
@@ -718,7 +742,7 @@ export default function SkillsPage() {
             <p>
               한국 비즈니스 도메인(노무·세무·법무·경영)의 계산·판정·검토를
               <br />
-              Claude가 정확하게 수행하도록 훈련된 18개 스킬 모음입니다.
+              Claude가 정확하게 수행하도록 훈련된 19개 스킬 모음입니다.
             </p>
           </div>
         </section>
@@ -777,7 +801,7 @@ export default function SkillsPage() {
         {/* Skill Cards */}
         <section className="skills-grid-section">
           <h2 className="skills-grid-title">
-            18개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 1 · 법무 1 · 경영 6)
+            19개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 1 · 법무 1 · 경영 7)
           </h2>
           <p className="skills-grid-subtitle">
             키워드를 포함한 질문을 입력하면 해당 스킬이 자동으로 활성화됩니다.
