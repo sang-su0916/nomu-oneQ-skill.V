@@ -197,6 +197,73 @@ const SKILLS = [
     accentColor: "#fee2e2",
     accentText: "#7f1d1d",
   },
+  {
+    id: "financial-ratio",
+    emoji: "📊",
+    title: "재무비율 분석",
+    subtitle: "유동·안정·수익·활동성 20+ 지표",
+    description:
+      "유동비율·당좌비율(유동성), 부채비율·자기자본비율(안정성), ROE·ROA·영업이익률(수익성), 총자산회전율·매출채권회전율(활동성) 등 20개 이상의 재무비율을 산출하고 업종 평균 대비 해석을 제공합니다.",
+    triggers: ["재무비율", "유동비율", "부채비율", "ROE", "ROA", "수익성"],
+    triggerExample:
+      "당사 유동자산 15억, 유동부채 10억, 부채 30억, 자본 20억일 때 재무비율 분석해줘",
+    resultExample:
+      "유동비율 150% (양호) / 부채비율 150% (주의) / ROE 산정을 위해 당기순이익 추가 입력 필요",
+    source:
+      "https://github.com/sang-su0916/lbiz-ai-kit/tree/main/skills/financial-ratio",
+    accentColor: "#eff6ff",
+    accentText: "#1e40af",
+  },
+  {
+    id: "depreciation",
+    emoji: "🏗️",
+    title: "감가상각 계산",
+    subtitle: "정액법·정률법·생산량비례법·기준내용연수",
+    description:
+      "유형자산의 감가상각을 정액법·정률법·생산량비례법으로 산출합니다. 세법상 기준내용연수 조회, 잔존가액 설정, 연도별 상각 스케줄 전체 출력을 지원합니다.",
+    triggers: ["감가상각", "정액법", "정률법", "내용연수", "상각"],
+    triggerExample: "취득가 1억 원 기계를 10년 정액법으로 상각하면?",
+    resultExample:
+      "연간 상각액 9,000,000원 (잔존가액 10%) / 10년 누계 90,000,000원 / 연도별 장부가액 표 제공",
+    source:
+      "https://github.com/sang-su0916/lbiz-ai-kit/tree/main/skills/depreciation",
+    accentColor: "#f0fdf4",
+    accentText: "#14532d",
+  },
+  {
+    id: "break-even",
+    emoji: "⚖️",
+    title: "손익분기점 분석",
+    subtitle: "BEP 수량·매출·안전한계·영업레버리지",
+    description:
+      "고정비·변동비·판매가를 입력하면 BEP 수량과 BEP 매출액을 산출합니다. 목표이익 달성 판매량, 안전한계율, 영업레버리지(DOL)까지 함께 계산하여 경영 의사결정을 지원합니다.",
+    triggers: ["손익분기점", "BEP", "고정비", "변동비", "안전한계", "레버리지"],
+    triggerExample:
+      "고정비 월 1억, 제품가 1만원, 변동비 6천원일 때 손익분기점 몇 개?",
+    resultExample:
+      "BEP 수량 25,000개 / BEP 매출 2억 5천만원 / 공헌이익률 40% / 목표이익 2천만원 달성 시 30,000개",
+    source:
+      "https://github.com/sang-su0916/lbiz-ai-kit/tree/main/skills/break-even",
+    accentColor: "#fefce8",
+    accentText: "#713f12",
+  },
+  {
+    id: "financial-diagnosis",
+    emoji: "🏥",
+    title: "재무진단 종합",
+    subtitle: "financial-ratio + depreciation + break-even 통합 + S~D 등급",
+    description:
+      "재무비율·감가상각·손익분기점 분석을 통합하여 기업의 재무 건전성을 종합 스코어링합니다. S(최우수)~D(위험) 6단계 등급 판정과 항목별 개선 권고사항을 제공합니다.",
+    triggers: ["재무진단", "재무건전성", "재무등급", "종합진단", "재무점수"],
+    triggerExample:
+      "우리 회사 BS/IS 숫자 주면 재무 건전성 점수 매겨줘 (S~D 등급)",
+    resultExample:
+      "종합등급 B+ / 유동성 A · 안정성 B · 수익성 C+ · 활동성 B / 수익성 개선 위해 영업이익률 목표 5%↑ 권고",
+    source:
+      "https://github.com/sang-su0916/lbiz-ai-kit/tree/main/skills/financial-diagnosis",
+    accentColor: "#eff6ff",
+    accentText: "#1e3a8a",
+  },
 ];
 
 export default function SkillsPage() {
@@ -605,7 +672,7 @@ export default function SkillsPage() {
             <p>
               한국 비즈니스 도메인(노무·세무·법무·경영)의 계산·판정·검토를
               <br />
-              Claude가 정확하게 수행하도록 훈련된 12개 스킬 모음입니다.
+              Claude가 정확하게 수행하도록 훈련된 16개 스킬 모음입니다.
             </p>
           </div>
         </section>
@@ -664,7 +731,7 @@ export default function SkillsPage() {
         {/* Skill Cards */}
         <section className="skills-grid-section">
           <h2 className="skills-grid-title">
-            12개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 1 · 법무 1)
+            16개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 1 · 법무 1 · 경영 4)
           </h2>
           <p className="skills-grid-subtitle">
             키워드를 포함한 질문을 입력하면 해당 스킬이 자동으로 활성화됩니다.

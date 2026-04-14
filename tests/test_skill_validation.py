@@ -258,6 +258,158 @@ SCENARIOS = [
         "assert": lambda r: r["marginal_rate_pct"] == 15 and 12 < r["national_effective_rate_pct"] < 13,
         "desc": "과표 5천만 실효세율 약 12.48%",
     },
+    # break-even (경영)
+    {
+        "id": "BE-01",
+        "skill": "break-even",
+        "args": [
+            "calculate",
+            "--fixed-cost", "100000000",
+            "--unit-price", "10000",
+            "--unit-variable-cost", "6000",
+        ],
+        "assert": lambda r: r["bep_units"] == 25000 and r["bep_revenue"] == 250000000,
+        "desc": "고정비 1억·단가 1만·변동비 6천 → BEP 25,000개·2.5억",
+    },
+    {
+        "id": "BE-02",
+        "skill": "break-even",
+        "args": [
+            "calculate",
+            "--fixed-cost", "100000000",
+            "--unit-price", "10000",
+            "--unit-variable-cost", "6000",
+            "--target-profit", "20000000",
+        ],
+        "assert": lambda r: r["target_units"] == 30000,
+        "desc": "위 + 목표이익 2천만 → 목표수량 30,000개",
+    },
+    {
+        "id": "BE-03",
+        "skill": "break-even",
+        "args": [
+            "margin-of-safety",
+            "--actual-revenue", "300000000",
+            "--bep-revenue", "250000000",
+        ],
+        "assert": lambda r: 0.166 < r["margin_of_safety_ratio"] < 0.168,
+        "desc": "실제매출 3억·BEP 2.5억 → 안전한계율 ≈ 0.1667",
+    },
+    # depreciation (경영·세무)
+    {
+        "id": "DEP-01",
+        "skill": "depreciation",
+        "args": ["straight-line", "--acquisition-cost", "10000000", "--useful-life", "5"],
+        "assert": lambda r: r["annual_depreciation"] == 2000000,
+        "desc": "정액법 취득 1천만·잔존 0·5년 → 연 200만",
+    },
+    {
+        "id": "DEP-02",
+        "skill": "depreciation",
+        "args": ["straight-line", "--acquisition-cost", "100000000",
+                 "--salvage-value", "10000000", "--useful-life", "10"],
+        "assert": lambda r: r["annual_depreciation"] == 9000000,
+        "desc": "정액법 취득 1억·잔존 1천만·10년 → 연 900만",
+    },
+    {
+        "id": "DEP-03",
+        "skill": "depreciation",
+        "args": ["estimate-useful-life", "--asset-category", "computer"],
+        "assert": lambda r: r["useful_life_years"] == 4,
+        "desc": "기준내용연수: 컴퓨터 → 4년",
+    },
+    {
+        "id": "DEP-04",
+        "skill": "depreciation",
+        "args": ["production", "--acquisition-cost", "10000000", "--salvage-value", "0",
+                 "--total-production", "100000", "--actual-production", "20000"],
+        "assert": lambda r: r["current_depreciation"] == 2000000,
+        "desc": "생산량비례법 1천만/10만×2만 → 200만",
+    },
+    # financial-ratio (경영)
+    {
+        "id": "FR-01",
+        "skill": "financial-ratio",
+        "args": ["liquidity", "--current-assets", "15000000", "--current-liabilities", "10000000"],
+        "assert": lambda r: r["current_ratio"] == 150.0,
+        "desc": "유동자산 1500만/유동부채 1000만 → 유동비율 150.0%",
+    },
+    {
+        "id": "FR-02",
+        "skill": "financial-ratio",
+        "args": [
+            "leverage", "--total-debt", "300000000", "--total-equity", "200000000",
+            "--total-assets", "500000000", "--ebit", "30000000", "--interest-expense", "10000000",
+        ],
+        "assert": lambda r: r["debt_to_equity"] == 150.0,
+        "desc": "부채 3억/자본 2억 → 부채비율 150.0%",
+    },
+    {
+        "id": "FR-03",
+        "skill": "financial-ratio",
+        "args": [
+            "profitability", "--net-income", "10000000", "--revenue", "100000000",
+            "--total-assets", "500000000", "--total-equity", "500000000",
+        ],
+        "assert": lambda r: r["net_profit_margin"] == 10.0,
+        "desc": "당기순이익 1천만/매출 1억 → 매출순이익률 10.0%",
+    },
+    {
+        "id": "FR-04",
+        "skill": "financial-ratio",
+        "args": [
+            "profitability", "--net-income", "50000000", "--revenue", "500000000",
+            "--total-assets", "1000000000", "--total-equity", "500000000",
+        ],
+        "assert": lambda r: r["roe"] == 10.0,
+        "desc": "당기순이익 5천만/자본 5억 → ROE 10.0%",
+    },
+    # financial-diagnosis (경영 — 메타 종합진단)
+    {
+        "id": "FD-01",
+        "skill": "financial-diagnosis",
+        "args": [
+            "diagnose",
+            "--current-assets", "200000000", "--current-liabilities", "100000000",
+            "--inventory", "40000000", "--accounts-receivable", "50000000",
+            "--total-debt", "160000000", "--total-equity", "200000000", "--total-assets", "360000000",
+            "--revenue", "500000000", "--net-income", "24000000",
+            "--operating-income", "50000000", "--cogs", "300000000",
+            "--ebit", "50000000", "--interest-expense", "10000000",
+        ],
+        "assert": lambda r: r["grade"][0] in ("A", "S") and r["overall_score"] >= 75,
+        "desc": "건전 기업 (유동 200/부채 80/ROE 12/이자보상 5) → A 또는 S",
+    },
+    {
+        "id": "FD-02",
+        "skill": "financial-diagnosis",
+        "args": [
+            "diagnose",
+            "--current-assets", "80000000", "--current-liabilities", "100000000",
+            "--inventory", "30000000", "--accounts-receivable", "50000000",
+            "--total-debt", "450000000", "--total-equity", "150000000", "--total-assets", "600000000",
+            "--revenue", "500000000", "--net-income", "-7500000",
+            "--operating-income", "5000000", "--cogs", "400000000",
+            "--ebit", "5000000", "--interest-expense", "10000000",
+        ],
+        "assert": lambda r: r["grade"][0] == "D" and r["overall_score"] < 45,
+        "desc": "위험 기업 (유동 80/부채 300/ROE -5/이자보상 0.5) → D",
+    },
+    {
+        "id": "FD-03",
+        "skill": "financial-diagnosis",
+        "args": [
+            "diagnose",
+            "--current-assets", "80000000", "--current-liabilities", "100000000",
+            "--inventory", "30000000", "--accounts-receivable", "50000000",
+            "--total-debt", "450000000", "--total-equity", "150000000", "--total-assets", "600000000",
+            "--revenue", "500000000", "--net-income", "-7500000",
+            "--operating-income", "5000000", "--cogs", "400000000",
+            "--ebit", "5000000", "--interest-expense", "10000000",
+        ],
+        "assert": lambda r: any("한계기업" in f for f in r.get("risk_flags", [])),
+        "desc": "이자보상배율 1배 미만 → risk_flags에 '한계기업' 포함",
+    },
 ]
 
 

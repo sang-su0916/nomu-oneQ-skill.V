@@ -44,9 +44,14 @@
 
 OMSC로 추가 예정: 상속세, 취득세, 등록세, 공증료, 임대보증금 반환, 상속분 산정.
 
-## 📈 경영 스킬 (계획)
+## 📈 경영 스킬 (4)
 
-OMSC로 추가 예정: ISO 심사 체크리스트, BCP 진단, 사업계획서 검토.
+| 스킬                    | 설명                                                                            | 트리거                                    |
+| ----------------------- | ------------------------------------------------------------------------------- | ----------------------------------------- |
+| **financial-ratio**     | 재무비율 분석 (유동·안정·수익·활동성 20+ 지표)                                  | 재무비율, 유동비율, 부채비율, ROE, ROA    |
+| **depreciation**        | 감가상각 (정액법·정률법·생산량비례법·기준내용연수)                              | 감가상각, 정액법, 정률법, 내용연수        |
+| **break-even**          | 손익분기점 (BEP 수량·매출·안전한계·영업레버리지)                                | 손익분기점, BEP, 고정비, 변동비, 안전한계 |
+| **financial-diagnosis** | 재무진단 종합 (financial-ratio + depreciation + break-even 통합 + S~D 스코어링) | 재무진단, 재무건전성, 재무등급, 종합진단  |
 
 ## 디렉토리 구조
 
@@ -84,7 +89,18 @@ skills/
 │   └── references/calculator.py
 ├── labor-contract-review/
 │   └── SKILL.md
-└── nda-review/
+├── nda-review/
+│   └── SKILL.md
+├── financial-ratio/
+│   ├── SKILL.md
+│   └── references/calculator.py
+├── depreciation/
+│   ├── SKILL.md
+│   └── references/calculator.py
+├── break-even/
+│   ├── SKILL.md
+│   └── references/calculator.py
+└── financial-diagnosis/
     └── SKILL.md
 ```
 
