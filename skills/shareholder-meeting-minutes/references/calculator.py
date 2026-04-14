@@ -6,7 +6,10 @@
   quorum            의결 정족수 판정 (보통·특별)
   notice-deadline   소집통지 마감일 계산 (§363, §363⑤)
   checklist         의사록 필수 기재사항 체크 (§373)
-  agenda-template   안건 문구 템플릿 생성 (정기주총 전형 안건 7종)
+  agenda-template   안건 문구 템플릿 생성 (11종 + custom)
+  full-minutes      회사 유형별 전체 의사록 텍스트 생성
+                    (general / small / single-shareholder / written-resolution,
+                     regular / extraordinary)
 
 CLI:
   python3 calculator.py quorum --type special \\
@@ -18,6 +21,9 @@ CLI:
       --has-agenda-results --has-closing --has-signatures
   python3 calculator.py agenda-template --agenda-type financial-statement \\
       --company-name "주식회사 엘비즈파트너스" --fiscal-year "제10기"
+  python3 calculator.py full-minutes --company-type general \\
+      --meeting-type regular --fiscal-year 10 \\
+      --agenda-types financial-statement,dividend,director-compensation
 
 주의:
   - 표준 라이브러리만 사용 (argparse, json, sys, datetime, fractions)
@@ -226,14 +232,25 @@ def checklist(flags: dict) -> dict:
 
 # ─── 4) agenda-template ──────────────────────────────────────────────────────
 
+# 상수님 제공 표준 결의 문구
+ORDINARY_RESULT = (
+    "출석주주의 의결권의 과반수와 발행주식총수의 4분의 1 이상 찬성으로 "
+    "원안대로 승인 가결하다."
+)
+SPECIAL_RESULT = (
+    "출석주주의 의결권의 3분의 2 이상과 발행주식총수의 3분의 1 이상 찬성으로 "
+    "원안대로 승인 가결하다."
+)
+
 AGENDA_TEMPLATES = {
     "financial-statement": {
-        "title_tpl": "{fiscal_year} ({company_name}) 재무제표 승인의 건",
+        "title_tpl": "{fiscal_year} 재무제표 승인의 건",
         "chair_tpl": (
-            "의장은 {fiscal_year} 재무제표(대차대조표·손익계산서·이익잉여금처분계산서)를 "
-            "별첨과 같이 제출하고 그 내용을 설명한 후 본 의안의 승인을 구하였다."
+            "의장은 {fiscal_year} 재무상태표·손익계산서·이익잉여금처분계산서(안)을 "
+            "별첨과 같이 제출하고 그 내용을 설명한 후 본 의안의 승인을 구한바, "
+            "상법 및 정관이 정한 결의요건을 충족하였으므로"
         ),
-        "result_tpl": "출석 주주 전원의 찬성으로 원안대로 가결되다.",
+        "result_tpl": ORDINARY_RESULT,
         "resolution_type": "ordinary",
         "legal_basis": "상법 §449·§447, §368 (보통결의)",
     },
@@ -241,43 +258,42 @@ AGENDA_TEMPLATES = {
         "title_tpl": "{fiscal_year} 이익잉여금 처분(현금배당) 결의의 건",
         "chair_tpl": (
             "의장은 {fiscal_year} 이익잉여금 중 1주당 금 ○○○원, 총액 금 ○○○,○○○,○○○원을 "
-            "현금배당하고, 배당기준일과 배당금 지급 개시일을 정할 것을 부의하였다."
+            "현금배당하고, 배당기준일을 ○○○○년 ○월 ○일로, 배당금 지급 개시일을 "
+            "○○○○년 ○월 ○일로 할 것을 부의한바, "
+            "상법 및 정관이 정한 결의요건을 충족하였으므로"
         ),
-        "result_tpl": "출석 주주 전원의 찬성으로 원안대로 가결되다.",
+        "result_tpl": ORDINARY_RESULT,
         "resolution_type": "ordinary",
         "legal_basis": "상법 §462, §368 (보통결의)",
     },
     "director-compensation": {
         "title_tpl": "이사 및 감사의 보수한도 승인의 건",
         "chair_tpl": (
-            "의장은 {fiscal_year} 이사의 보수한도액과 감사의 보수한도액을 정할 것을 부의하였다."
+            "의장은 {fiscal_year} 이사의 보수한도액을 금 ○○○,○○○,○○○원, "
+            "감사의 보수한도액을 금 ○○,○○○,○○○원으로 정할 것을 부의한바, "
+            "상법 및 정관이 정한 결의요건을 충족하였으므로"
         ),
-        "result_tpl": "출석 주주 전원의 찬성으로 원안대로 가결되다.",
+        "result_tpl": ORDINARY_RESULT,
         "resolution_type": "ordinary",
         "legal_basis": "상법 §388, §368 (보통결의)",
     },
     "director-appointment": {
         "title_tpl": "이사 선임의 건",
         "chair_tpl": (
-            "의장은 이사 선임의 건을 부의하고, 후보자의 인적사항·경력을 설명한 후 "
-            "본 의안의 승인을 구하였다."
+            "의장은 이사 ○○○를 선임하고자 함을 설명한바, "
+            "상법 및 정관이 정한 결의요건을 충족하였으므로"
         ),
-        "result_tpl": (
-            "출석 주주 ○○주(○○.○%)의 찬성으로 원안대로 가결되다. "
-            "(이해관계 안건으로 기권·반대표가 있는 경우 별도 기재)"
-        ),
+        "result_tpl": ORDINARY_RESULT,
         "resolution_type": "ordinary",
         "legal_basis": "상법 §382, §368 (보통결의)",
     },
     "articles-amendment": {
         "title_tpl": "정관 일부 변경의 건",
         "chair_tpl": (
-            "의장은 {fiscal_year} 정관 일부 변경안을 별첨과 같이 제출하고 주요 변경사항을 "
-            "설명한 후 본 의안의 승인을 구하였다."
+            "의장은 정관 일부 변경안을 별첨과 같이 제출하고 주요 변경사항을 "
+            "설명한바, 상법 및 정관이 정한 결의요건을 충족하였으므로"
         ),
-        "result_tpl": (
-            "발행주식총수 1/3 이상 및 출석 의결권 2/3 이상의 찬성으로 원안대로 가결되다."
-        ),
+        "result_tpl": SPECIAL_RESULT,
         "resolution_type": "special",
         "legal_basis": "상법 §433·§434 (특별결의)",
     },
@@ -285,16 +301,70 @@ AGENDA_TEMPLATES = {
         "title_tpl": "주식매수선택권 부여의 건",
         "chair_tpl": (
             "의장은 임직원 ○○○ 외 ○명에게 주식매수선택권을 부여하는 건을 부의하고, "
-            "부여 대상자·수량·행사가액·행사기간을 설명한 후 본 의안의 승인을 구하였다."
+            "부여 대상자·수량·행사가액·행사기간을 설명한바, "
+            "상법 및 정관이 정한 결의요건을 충족하였으므로"
         ),
-        "result_tpl": "출석 주주 전원의 찬성으로 원안대로 가결되다.",
+        "result_tpl": ORDINARY_RESULT,
         "resolution_type": "ordinary",
         "legal_basis": "상법 §340의2·§340의3, §368 (정관 근거 + 보통결의)",
     },
+    "ceo-appointment": {
+        "title_tpl": "대표이사 선임의 건",
+        "chair_tpl": (
+            "의장은 새로 선임된 이사 ○○○를 대표이사로 선임하고자 함을 설명한바, "
+            "상법 및 정관이 정한 결의요건을 충족하였으므로"
+        ),
+        "result_tpl": ORDINARY_RESULT,
+        "resolution_type": "ordinary",
+        "legal_basis": "상법 §389, §368 (보통결의)",
+    },
+    "headquarters-relocation": {
+        "title_tpl": "본점 이전의 건",
+        "chair_tpl": (
+            "의장은 회사 본점을 ○○시 ○○구 ○○로 ○○로 이전하고자 함을 설명한바, "
+            "상법 및 정관이 정한 결의요건을 충족하였으므로"
+        ),
+        "result_tpl": ORDINARY_RESULT,
+        "resolution_type": "ordinary",
+        "legal_basis": "상법 §289·§368 (정관 범위 내 보통결의 / 정관 변경 동반 시 특별결의)",
+    },
+    "capital-reduction": {
+        "title_tpl": "자본금 감소의 건",
+        "chair_tpl": (
+            "의장은 회사의 자본금을 금 ○○○,○○○,○○○원에서 금 ○○○,○○○,○○○원으로 "
+            "감소하고자 함을 설명한바, 상법 및 정관이 정한 결의요건을 충족하였으므로"
+        ),
+        "result_tpl": SPECIAL_RESULT,
+        "resolution_type": "special",
+        "legal_basis": "상법 §438·§434 (특별결의)",
+    },
+    "director-removal": {
+        "title_tpl": "이사 해임의 건",
+        "chair_tpl": (
+            "의장은 이사 ○○○를 해임하고자 함을 설명한바, "
+            "상법 및 정관이 정한 결의요건을 충족하였으므로"
+        ),
+        "result_tpl": SPECIAL_RESULT,
+        "resolution_type": "special",
+        "legal_basis": "상법 §385·§434 (특별결의)",
+    },
+    "merger": {
+        "title_tpl": "회사 합병의 건",
+        "chair_tpl": (
+            "의장은 회사가 ○○주식회사와 합병하고자 함을 설명하고 합병계약서(안)을 "
+            "별첨과 같이 제출한바, 상법 및 정관이 정한 결의요건을 충족하였으므로"
+        ),
+        "result_tpl": SPECIAL_RESULT,
+        "resolution_type": "special",
+        "legal_basis": "상법 §522·§434 (특별결의)",
+    },
     "custom": {
         "title_tpl": "(안건명 수기 입력)",
-        "chair_tpl": "의장은 본 의안을 부의하고 내용을 설명한 후 승인을 구하였다.",
-        "result_tpl": "출석 주주 전원의 찬성으로 원안대로 가결되다.",
+        "chair_tpl": (
+            "의장은 본 의안을 부의하고 내용을 설명한바, "
+            "상법 및 정관이 정한 결의요건을 충족하였으므로"
+        ),
+        "result_tpl": ORDINARY_RESULT,
         "resolution_type": "ordinary",
         "legal_basis": "상법 §368 또는 §434 (안건 성격에 따라)",
     },
@@ -329,12 +399,231 @@ def agenda_template(
         "title": title,
         "chair_statement": chair,
         "result_statement": result,
-        "full_text": f"{title}\n\n  {chair}\n  → {result}",
+        "full_text": f"{title}\n\n  {chair} {result}",
         "resolution_type": tpl["resolution_type"],
         "resolution_type_kr": (
             "보통결의" if tpl["resolution_type"] == "ordinary" else "특별결의"
         ),
         "legal_basis": tpl["legal_basis"],
+        "disclaimer": DISCLAIMER,
+    }
+
+
+# ─── 5) full-minutes ─────────────────────────────────────────────────────────
+
+COMPANY_TYPE_LABELS = {
+    "general": "비상장 일반 주식회사",
+    "small": "소규모회사(자본금 10억 원 미만)",
+    "single-shareholder": "1인 주주 회사(개최형)",
+    "written-resolution": "1인 주주 회사(서면결의형)",
+}
+
+MEETING_TYPE_LABELS = {
+    "regular": "정기주주총회",
+    "extraordinary": "임시주주총회",
+}
+
+# 변경 금지 문구 (상수님 제공 표준)
+NOTICE_SMALL = (
+    "자본금 총액 10억 원 미만 회사로서 상법 제363조에 따라 "
+    "주주총회일 10일 전에 각 주주에게 소집통지를 완료하였다."
+)
+NOTICE_WAIVER_SINGLE = (
+    "주주 전원의 동의에 따라 소집절차 없이 주주총회를 개최하였다."
+)
+WRITTEN_RESOLUTION_CLAUSE = (
+    "상법 제363조 제5항에 따라 아래 사항에 대하여 서면으로 동의하고, "
+    "주주총회 결의가 있었던 것으로 하기로 하다."
+)
+CLOSING_CLAUSE = (
+    "위 결의를 명확히 하기 위하여 이 의사록을 작성하고 "
+    "의장과 출석한 이사가 아래와 같이 기명날인 또는 서명하다."
+)
+
+
+def _render_agenda_block(idx: int, agenda_type: str, fiscal_year_str: str,
+                         company_name: str) -> tuple[str, str]:
+    """안건 1건을 의사록 본문용으로 렌더링. (블록 텍스트, resolution_type) 반환."""
+    tpl = AGENDA_TEMPLATES[agenda_type]
+    title = tpl["title_tpl"].format(
+        company_name=company_name, fiscal_year=fiscal_year_str,
+    )
+    chair = tpl["chair_tpl"].format(
+        company_name=company_name, fiscal_year=fiscal_year_str,
+    )
+    result = tpl["result_tpl"]
+    block = (
+        f"  제{idx}호 의안: {title}\n"
+        f"    {chair} {result}"
+    )
+    return block, tpl["resolution_type"]
+
+
+def full_minutes(
+    company_type: str,
+    meeting_type: str,
+    fiscal_year: int,
+    meeting_date_str: str,
+    company_name: str,
+    address: str,
+    agenda_types: list[str],
+) -> dict:
+    """회사 유형별 전체 의사록 텍스트 생성.
+
+    - company_type: general / small / single-shareholder / written-resolution
+    - meeting_type: regular / extraordinary
+    - 출력: template_text 필드에 복붙 가능한 전체 의사록 문자열.
+    """
+    if company_type not in COMPANY_TYPE_LABELS:
+        return {"error": f"company-type은 {list(COMPANY_TYPE_LABELS)} 중 하나여야 합니다"}
+    if meeting_type not in MEETING_TYPE_LABELS:
+        return {"error": f"meeting-type은 {list(MEETING_TYPE_LABELS)} 중 하나여야 합니다"}
+    if fiscal_year <= 0:
+        return {"error": "fiscal-year는 1 이상 정수여야 합니다"}
+    try:
+        meeting_date = datetime.strptime(meeting_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return {"error": "meeting-date 형식은 YYYY-MM-DD 이어야 합니다"}
+
+    unknown = [a for a in agenda_types if a not in AGENDA_TEMPLATES]
+    if unknown:
+        return {"error": f"미지원 안건: {unknown} — 지원: {list(AGENDA_TEMPLATES)}"}
+
+    fiscal_str = f"제{fiscal_year}기"
+    meeting_label = MEETING_TYPE_LABELS[meeting_type]
+    date_str = (
+        f"{meeting_date.year}년 {meeting_date.month}월 {meeting_date.day}일"
+    )
+
+    # 헤더 (1인 서면결의형은 "주주총회 결의서" 제목, 그 외는 "의사록")
+    lines: list[str] = []
+    if company_type == "written-resolution":
+        # 서면결의는 정기/임시 구분 없이 별도 양식
+        header = f"{fiscal_str} 주주총회 결의서"
+    else:
+        if meeting_type == "regular":
+            header = f"{fiscal_str} 정기주주총회 의사록"
+        else:
+            header = "임시주주총회 의사록"
+    lines.append("─" * 40)
+    lines.append(f"           {header}")
+    lines.append("─" * 40)
+    lines.append("")
+
+    # 기본 정보
+    lines.append(f"1. 회 사 명: {company_name}")
+    lines.append(f"2. 총회종류: {meeting_label}")
+    lines.append(f"3. 일    시: {date_str}")
+    lines.append(f"4. 장    소: {address}")
+    lines.append("")
+
+    if company_type == "written-resolution":
+        # 1인 서면결의형 — 소집·출석·의장 생략, 결의서 본문
+        lines.append("5. 결의 방식:")
+        lines.append(f"   {WRITTEN_RESOLUTION_CLAUSE}")
+        lines.append("")
+        lines.append("6. 결의 사항:")
+        lines.append("")
+        for i, atype in enumerate(agenda_types, start=1):
+            block, _ = _render_agenda_block(i, atype, fiscal_str, company_name)
+            lines.append(block)
+            lines.append("")
+        lines.append(f"   {date_str}")
+        lines.append("")
+        lines.append(f"   {company_name}")
+        lines.append("     주주 ○ ○ ○  (인)")
+    else:
+        # 소집통지·출석·의장 파트
+        lines.append("5. 소집 및 출석 상황:")
+        if company_type == "small":
+            lines.append(f"   - {NOTICE_SMALL}")
+            lines.append("   - 발행주식의 총수:          ○○,○○○주")
+            lines.append("   - 의결권 있는 주식의 총수:  ○○,○○○주")
+            lines.append("   - 출석주주의 주식수:        ○○,○○○주")
+        elif company_type == "single-shareholder":
+            lines.append(f"   - {NOTICE_WAIVER_SINGLE}")
+            lines.append(
+                "   - 주주 ○○○가 의결권 있는 주식 ○○주 전부를 보유하고 출석하였다."
+            )
+        else:  # general
+            lines.append(
+                "   - 상법 제363조에 따라 주주총회일 2주 전에 "
+                "각 주주에게 소집통지를 완료하였다."
+            )
+            lines.append("   - 발행주식의 총수:          ○○,○○○주")
+            lines.append("   - 의결권 있는 주식의 총수:  ○○,○○○주")
+            lines.append("   - 출석주주의 주식수:        ○○,○○○주 (출석률 ○○.○%)")
+        lines.append("")
+
+        lines.append("6. 의    장: 대표이사 ○ ○ ○")
+        lines.append(
+            "7. 개 회 선언: 의장은 위와 같이 적법한 성원이 되었음을 확인하고 "
+            "○시 ○분에 개회를 선언하다."
+        )
+        lines.append("")
+
+        # 임시주총은 사유 문구 추가
+        if meeting_type == "extraordinary":
+            lines.append(
+                "   ※ 본 임시주주총회는 아래 안건을 신속히 처리하기 위하여 "
+                "소집되었음을 의장이 설명하였다."
+            )
+            lines.append("")
+
+        lines.append("8. 의안의 심의 및 결의:")
+        lines.append("")
+        for i, atype in enumerate(agenda_types, start=1):
+            block, _ = _render_agenda_block(i, atype, fiscal_str, company_name)
+            lines.append(block)
+            lines.append("")
+
+        lines.append("9. 폐    회: 의장은 ○시 ○분에 폐회를 선언하다.")
+        lines.append("")
+        lines.append(f"   {CLOSING_CLAUSE}")
+        lines.append("")
+        lines.append(f"     {date_str}")
+        lines.append("")
+        lines.append(f"     {company_name}")
+        lines.append("        의장 대표이사 ○ ○ ○  (인)")
+        lines.append("        출석이사      ○ ○ ○  (인)")
+        lines.append("        출석이사      ○ ○ ○  (인)")
+
+    lines.append("─" * 40)
+    template_text = "\n".join(lines)
+
+    # 안건별 결의유형 요약
+    agenda_summary = []
+    for i, atype in enumerate(agenda_types, start=1):
+        tpl = AGENDA_TEMPLATES[atype]
+        agenda_summary.append({
+            "index": i,
+            "agenda_type": atype,
+            "title": tpl["title_tpl"].format(
+                company_name=company_name, fiscal_year=fiscal_str,
+            ),
+            "resolution_type": tpl["resolution_type"],
+            "resolution_type_kr": (
+                "보통결의" if tpl["resolution_type"] == "ordinary" else "특별결의"
+            ),
+            "legal_basis": tpl["legal_basis"],
+        })
+
+    return {
+        "mode": "full-minutes",
+        "company_type": company_type,
+        "company_type_kr": COMPANY_TYPE_LABELS[company_type],
+        "meeting_type": meeting_type,
+        "meeting_type_kr": MEETING_TYPE_LABELS[meeting_type],
+        "inputs": {
+            "fiscal_year": fiscal_year,
+            "meeting_date": meeting_date.isoformat(),
+            "company_name": company_name,
+            "address": address,
+            "agenda_types": agenda_types,
+        },
+        "agenda_summary": agenda_summary,
+        "template_text": template_text,
+        "legal_basis": "상법 §363·§368·§373·§434",
         "disclaimer": DISCLAIMER,
     }
 
@@ -378,6 +667,32 @@ def _build_parser() -> argparse.ArgumentParser:
     p_a.add_argument("--fiscal-year", default="제○○기",
                      help="사업연도 (예: 제10기)")
 
+    # full-minutes
+    p_f = sub.add_parser("full-minutes", help="회사 유형별 전체 의사록 텍스트 생성")
+    p_f.add_argument("--company-type",
+                     choices=tuple(COMPANY_TYPE_LABELS.keys()),
+                     default="general",
+                     help="회사 유형 (general/small/single-shareholder/written-resolution)")
+    p_f.add_argument("--meeting-type",
+                     choices=tuple(MEETING_TYPE_LABELS.keys()),
+                     default="regular",
+                     help="총회 유형 (regular=정기, extraordinary=임시)")
+    p_f.add_argument("--fiscal-year", type=int, default=10,
+                     help="기수 (정수, 예: 10 → 제10기)")
+    p_f.add_argument("--meeting-date",
+                     default=date.today().isoformat(),
+                     help="주총 개최일 YYYY-MM-DD (기본: 오늘)")
+    p_f.add_argument("--company-name", default="○○주식회사", help="회사명")
+    p_f.add_argument("--address",
+                     default="○○시 ○○구 ○○로 ○○",
+                     help="회사 주소(총회 장소)")
+    p_f.add_argument("--agenda-types",
+                     default="financial-statement,dividend,director-compensation",
+                     help=(
+                         "콤마 구분 안건 타입 리스트. 지원: "
+                         + ",".join(AGENDA_TEMPLATES.keys())
+                     ))
+
     return parser
 
 
@@ -404,6 +719,17 @@ def main(argv=None) -> int:
             agenda_type=args.agenda_type,
             company_name=args.company_name,
             fiscal_year=args.fiscal_year,
+        )
+    elif args.cmd == "full-minutes":
+        agenda_list = [a.strip() for a in args.agenda_types.split(",") if a.strip()]
+        result = full_minutes(
+            company_type=args.company_type,
+            meeting_type=args.meeting_type,
+            fiscal_year=args.fiscal_year,
+            meeting_date_str=args.meeting_date,
+            company_name=args.company_name,
+            address=args.address,
+            agenda_types=agenda_list,
         )
     else:
         print(f"Unknown command: {args.cmd}", file=sys.stderr)

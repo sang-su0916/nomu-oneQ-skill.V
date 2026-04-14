@@ -991,6 +991,42 @@ SCENARIOS = [
         ),
         "desc": "소집통지 마감(소규모): 주총 2026-05-15, 자본금 10억↓ → 2026-05-05 (10일 전, §363⑤)",
     },
+    {
+        "id": "SMM-06",
+        "skill": "shareholder-meeting-minutes",
+        "args": [
+            "full-minutes",
+            "--company-type", "written-resolution",
+            "--meeting-type", "regular",
+            "--fiscal-year", "10",
+            "--meeting-date", "2026-03-31",
+            "--company-name", "테스트주식회사",
+            "--agenda-types", "financial-statement,dividend",
+        ],
+        "assert": lambda r: (
+            r["mode"] == "full-minutes"
+            and r["company_type"] == "written-resolution"
+            and "주주총회 결의서" in r["template_text"]
+            and "상법 제363조 제5항" in r["template_text"]
+            and "서면으로 동의" in r["template_text"]
+        ),
+        "desc": "full-minutes 1인 서면결의형: 제목 '결의서' + §363⑤ + '서면으로 동의' 문구 포함",
+    },
+    {
+        "id": "SMM-07",
+        "skill": "shareholder-meeting-minutes",
+        "args": [
+            "agenda-template",
+            "--agenda-type", "articles-amendment",
+            "--fiscal-year", "제10기",
+        ],
+        "assert": lambda r: (
+            r["resolution_type"] == "special"
+            and "3분의 2 이상" in r["result_statement"]
+            and "3분의 1 이상" in r["result_statement"]
+        ),
+        "desc": "agenda-template 정관변경(특별결의): '3분의 2 이상' + '3분의 1 이상' 문구 포함",
+    },
 ]
 
 
