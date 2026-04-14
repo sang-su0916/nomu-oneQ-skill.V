@@ -1027,6 +1027,68 @@ SCENARIOS = [
         ),
         "desc": "agenda-template 정관변경(특별결의): '3분의 2 이상' + '3분의 1 이상' 문구 포함",
     },
+    {
+        "id": "SMM-08",
+        "skill": "shareholder-meeting-minutes",
+        "args": [
+            "full-minutes",
+            "--company-type", "lbiz-standard",
+            "--fiscal-year", "10",
+            "--company-name", "테스트",
+            "--meeting-date", "2026-03-15",
+            "--day-of-week", "일",
+            "--meeting-time", "오후 1시",
+            "--end-time", "오후 1시 50분",
+            "--total-shares", "2000",
+            "--total-shareholders", "1",
+            "--present-shareholders", "1",
+            "--present-shares", "2000",
+            "--chair-name", "김의장",
+            "--ceo-name", "김대표",
+            "--total-comp-limit", "5억원",
+            "--ceo-comp-limit", "3억",
+            "--director-comp-limit", "2억5천만원",
+            "--dividend-total", "5천만원",
+            "--dividend-base-date", "2025-12-31",
+            "--dividend-payment-date", "2026-04-17",
+            "--settlement-year", "2025",
+        ],
+        "assert": lambda r: (
+            r["mode"] == "full-minutes"
+            and r["company_type"] == "lbiz-standard"
+            and "제 10 기 정 기 주 주 총 회 의 사 록" in r["template_text"]
+            and "의장 김의장은 의장석에 등단하여 출석 주식 수 현황을 보고하고 본 총회가 적법하게 성립되었음을 선언" in r["template_text"]
+            and "당회사의 2025년도 결산기가 12월31일자로 종료함에 따라" in r["template_text"]
+            and "대표이사 : 최대 3억" in r["template_text"]
+            and "이사 : 최대 2억5천만원" in r["template_text"]
+            and "배당기준일 : 2025. 12. 31" in r["template_text"]
+            and "의장은 이상으로서" in r["template_text"]
+            and "위 결의를 명확히 하기 위하여" in r["template_text"]
+            and "대표이사    김대표" in r["template_text"]
+        ),
+        "desc": "full-minutes lbiz-standard: 제목 자간·결산연도·보수한도·배당기준일·폐회·대표이사 서명 모두 재현",
+    },
+    {
+        "id": "SMM-09",
+        "skill": "shareholder-meeting-minutes",
+        "args": [
+            "consent-form",
+            "--company-name", "테스트",
+            "--consent-date", "2026-03-15",
+            "--shareholders", "홍길동,김철수",
+        ],
+        "assert": lambda r: (
+            r["mode"] == "consent-form"
+            and "주 주 전 원 기 간 단 축 동 의 서" in r["template_text"]
+            and "주식회사 테스트 주주" in r["template_text"]
+            and "상법 제363조 제5항 규정에 의거" in r["template_text"]
+            and "2026. 3. 15" in r["template_text"]
+            and "주 주    홍길동      (인)" in r["template_text"]
+            and "주 주    김철수      (인)" in r["template_text"]
+            and r["shareholder_count"] == 2
+        ),
+        "desc": "consent-form 복수 주주(홍길동·김철수): 제목·§363⑤·일자·복수 서명란 재현",
+    },
 ]
 
 

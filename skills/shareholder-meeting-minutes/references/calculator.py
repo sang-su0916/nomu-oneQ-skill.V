@@ -8,8 +8,10 @@
   checklist         의사록 필수 기재사항 체크 (§373)
   agenda-template   안건 문구 템플릿 생성 (11종 + custom)
   full-minutes      회사 유형별 전체 의사록 텍스트 생성
-                    (general / small / single-shareholder / written-resolution,
+                    (general / small / single-shareholder / written-resolution
+                     / lbiz-standard,
                      regular / extraordinary)
+  consent-form      주주 전원 기간 단축(소집통지 생략) 동의서 생성 (§363⑤)
 
 CLI:
   python3 calculator.py quorum --type special \\
@@ -416,6 +418,7 @@ COMPANY_TYPE_LABELS = {
     "small": "소규모회사(자본금 10억 원 미만)",
     "single-shareholder": "1인 주주 회사(개최형)",
     "written-resolution": "1인 주주 회사(서면결의형)",
+    "lbiz-standard": "엘비즈 표준 양식(상수님 실무 템플릿)",
 }
 
 MEETING_TYPE_LABELS = {
@@ -459,6 +462,135 @@ def _render_agenda_block(idx: int, agenda_type: str, fiscal_year_str: str,
     return block, tpl["resolution_type"]
 
 
+def _format_korean_date(d: date, long_form: bool = False) -> str:
+    """'YYYY. M. DD' 형식으로 포매팅. long_form=True면 'YYYY년 M월 DD일'."""
+    if long_form:
+        return f"{d.year}년 {d.month}월 {d.day}일"
+    return f"{d.year}. {d.month}. {d.day:02d}"
+
+
+def _render_lbiz_standard(
+    fiscal_year: int,
+    meeting_date: date,
+    company_name: str,
+    address: str,
+    day_of_week: str,
+    meeting_time: str,
+    end_time: str,
+    total_shares: str,
+    total_shareholders: str,
+    present_shareholders: str,
+    present_shares: str,
+    chair_name: str,
+    ceo_name: str,
+    settlement_year: int,
+    total_comp_limit: str,
+    ceo_comp_limit: str,
+    director_comp_limit: str,
+    dividend_total: str,
+    dividend_base_date: date,
+    dividend_payment_date: date,
+) -> str:
+    """엘비즈 표준 양식(아드폰테스 정기주총 의사록 기반) 렌더링.
+
+    원본 공백·들여쓰기·자간 띄어쓰기를 그대로 재현.
+    기본 3안건: 재무제표 승인 / 이사 보수한도 / 정기배당.
+    """
+    meeting_year = meeting_date.year
+    meeting_date_long = _format_korean_date(meeting_date, long_form=True)
+    dividend_base_str = _format_korean_date(dividend_base_date)
+    dividend_payment_str = _format_korean_date(dividend_payment_date)
+
+    lines: list[str] = []
+    lines.append("<표>")
+    lines.append("")
+    lines.append(f"제 {fiscal_year} 기 정 기 주 주 총 회 의 사 록 ")
+    lines.append("")
+    lines.append("")
+    lines.append(f"1. 일  시 : {meeting_date.year}년 {meeting_date.month}월 {meeting_date.day}일 ({day_of_week}) {meeting_time}  ")
+    lines.append(f"2. 장  소 : {address}")
+    lines.append(
+        f"3. 출석현황 : 주식총수     {total_shares} 주          주주총수            {total_shareholders}명"
+    )
+    lines.append(
+        f"                    출석주주수          {present_shareholders}명        출석주식수       {present_shares} 주"
+    )
+    lines.append("")
+    lines.append(
+        f"의장 {chair_name}은 의장석에 등단하여 출석 주식 수 현황을 보고하고 본 총회가 적법하게 성립되었음을 선언한 후 의장인사 및 영업보고 후 심의안건에 들어감."
+    )
+    lines.append("")
+    lines.append(" ")
+    lines.append(
+        "              제 1호 의안: 재무상태표,손익계산서 및 이익잉여금처분계산서 승인의 건"
+    )
+    lines.append("")
+    lines.append(
+        f"     의장은 당회사의 {settlement_year}년도 결산기가 12월31일자로 종료함에 따라 그에 따른 당해 〔별첨〕"
+    )
+    lines.append(
+        "     의 재무상태표, 손익계산서, 이익잉여금처분계산서(안)를 상정하고 이에 따른 그 승인을 "
+    )
+    lines.append(
+        "     구한바, 참석주주들의 상호간 토론이 있은 후 참석한 주주 전원의 찬성으로 이를 승인가결하다."
+    )
+    lines.append("     [별첨1 참고] 재무상태표, 손익계산서, 이익잉여금처분계산서(안)")
+    lines.append("")
+    lines.append(" ")
+    lines.append(
+        f"              제 2호 의안: {meeting_year}년도 이사 보수 지급한도 승인의 건"
+    )
+    lines.append(
+        f"의장이 제2호 의안을 상정하자 {settlement_year}년도 이사보수지급한도액으로 {total_comp_limit}을 승인함"
+    )
+    lines.append(f"- 대표이사 : 최대 {ceo_comp_limit}")
+    lines.append(f"- 이사 : 최대 {director_comp_limit}")
+    lines.append("")
+    lines.append(" ")
+    lines.append("  ")
+    lines.append(
+        f"             제 3호 의안:  {meeting_year}년 정기배당 지급 승인의 건"
+    )
+    lines.append("")
+    lines.append(
+        f"  의장은 {dividend_base_str}일 현재 주주명부상 주주에게 이익배당 {dividend_total} 지급승인 의안을 상정하고, "
+    )
+    lines.append(" 이에 대한 가부를 물은 바 전원 이의 없이 찬성가결하다.")
+    lines.append(" ")
+    lines.append(f"    - 배당기준일 : {dividend_base_str}")
+    lines.append(f"    - 지급  시기 : {dividend_payment_str}")
+    lines.append("    [별첨2]정기배당 결의서")
+    lines.append("")
+    lines.append("   의장은 이상으로서  총회의 목적사항에 대한 심의를 마치고 폐회를 선언하다")
+    lines.append(f"(총회 종료시각 {end_time})")
+    lines.append("")
+    lines.append("")
+    lines.append("위 결의를 명확히 하기 위하여 본 의사록을 작성하고 의장과 출석한 이사가 아래와 같이 기명 날인하다.")
+    lines.append("")
+    lines.append("")
+    lines.append(f"       {meeting_date_long}   ")
+    lines.append(f"       주식회사 {company_name}")
+    lines.append("")
+    lines.append("")
+    lines.append("")
+    lines.append(f"                                                  대표이사    {ceo_name}          (인)")
+    lines.append(" ")
+    lines.append("                                             ")
+    lines.append("")
+    lines.append("")
+    lines.append("")
+    lines.append("    ")
+    lines.append("                               ")
+    lines.append(
+        "                                       - 별첨1 : 재무상태표,손익계산서,이익잉여금처분계산서(안)"
+    )
+    lines.append(
+        "                                       - 별첨2 : 정기배당 결의서"
+    )
+
+    return "\n".join(lines)
+
+
 def full_minutes(
     company_type: str,
     meeting_type: str,
@@ -467,10 +599,27 @@ def full_minutes(
     company_name: str,
     address: str,
     agenda_types: list[str],
+    # lbiz-standard 전용 파라미터 (optional)
+    day_of_week: str = "",
+    meeting_time: str = "",
+    end_time: str = "",
+    total_shares: str = "",
+    total_shareholders: str = "",
+    present_shareholders: str = "",
+    present_shares: str = "",
+    chair_name: str = "",
+    ceo_name: str = "",
+    settlement_year: int = 0,
+    total_comp_limit: str = "",
+    ceo_comp_limit: str = "",
+    director_comp_limit: str = "",
+    dividend_total: str = "",
+    dividend_base_date_str: str = "",
+    dividend_payment_date_str: str = "",
 ) -> dict:
     """회사 유형별 전체 의사록 텍스트 생성.
 
-    - company_type: general / small / single-shareholder / written-resolution
+    - company_type: general / small / single-shareholder / written-resolution / lbiz-standard
     - meeting_type: regular / extraordinary
     - 출력: template_text 필드에 복붙 가능한 전체 의사록 문자열.
     """
@@ -484,6 +633,111 @@ def full_minutes(
         meeting_date = datetime.strptime(meeting_date_str, "%Y-%m-%d").date()
     except ValueError:
         return {"error": "meeting-date 형식은 YYYY-MM-DD 이어야 합니다"}
+
+    # lbiz-standard 전용 분기 (기본 3안건 고정, agenda_types 무시 가능)
+    if company_type == "lbiz-standard":
+        # 기본값 보완
+        _dow = day_of_week or "목"
+        _mtime = meeting_time or "오후 1시"
+        _etime = end_time or "오후 1시 50분"
+        _tshr = total_shares or "○○○"
+        _tsh = total_shareholders or "○"
+        _psh = present_shareholders or "○"
+        _pshr = present_shares or "○○○"
+        _chair = chair_name or "○○○"
+        _ceo = ceo_name or _chair
+        _syear = settlement_year if settlement_year > 0 else meeting_date.year - 1
+        _tcl = total_comp_limit or "○○○원"
+        _ccl = ceo_comp_limit or "○○○원"
+        _dcl = director_comp_limit or "○○○원"
+        _dtot = dividend_total or "○○○원"
+        try:
+            _dbase = (
+                datetime.strptime(dividend_base_date_str, "%Y-%m-%d").date()
+                if dividend_base_date_str
+                else date(_syear, 12, 31)
+            )
+        except ValueError:
+            return {"error": "dividend-base-date 형식은 YYYY-MM-DD 이어야 합니다"}
+        try:
+            _dpay = (
+                datetime.strptime(dividend_payment_date_str, "%Y-%m-%d").date()
+                if dividend_payment_date_str
+                else meeting_date
+            )
+        except ValueError:
+            return {"error": "dividend-payment-date 형식은 YYYY-MM-DD 이어야 합니다"}
+
+        template_text = _render_lbiz_standard(
+            fiscal_year=fiscal_year,
+            meeting_date=meeting_date,
+            company_name=company_name,
+            address=address,
+            day_of_week=_dow,
+            meeting_time=_mtime,
+            end_time=_etime,
+            total_shares=_tshr,
+            total_shareholders=_tsh,
+            present_shareholders=_psh,
+            present_shares=_pshr,
+            chair_name=_chair,
+            ceo_name=_ceo,
+            settlement_year=_syear,
+            total_comp_limit=_tcl,
+            ceo_comp_limit=_ccl,
+            director_comp_limit=_dcl,
+            dividend_total=_dtot,
+            dividend_base_date=_dbase,
+            dividend_payment_date=_dpay,
+        )
+
+        return {
+            "mode": "full-minutes",
+            "company_type": company_type,
+            "company_type_kr": COMPANY_TYPE_LABELS[company_type],
+            "meeting_type": "regular",
+            "meeting_type_kr": "정기주주총회",
+            "inputs": {
+                "fiscal_year": fiscal_year,
+                "meeting_date": meeting_date.isoformat(),
+                "company_name": company_name,
+                "address": address,
+                "day_of_week": _dow,
+                "meeting_time": _mtime,
+                "end_time": _etime,
+                "total_shares": _tshr,
+                "total_shareholders": _tsh,
+                "present_shareholders": _psh,
+                "present_shares": _pshr,
+                "chair_name": _chair,
+                "ceo_name": _ceo,
+                "settlement_year": _syear,
+                "total_comp_limit": _tcl,
+                "ceo_comp_limit": _ccl,
+                "director_comp_limit": _dcl,
+                "dividend_total": _dtot,
+                "dividend_base_date": _dbase.isoformat(),
+                "dividend_payment_date": _dpay.isoformat(),
+            },
+            "agenda_summary": [
+                {"index": 1, "title": "재무상태표,손익계산서 및 이익잉여금처분계산서 승인의 건",
+                 "resolution_type": "ordinary", "resolution_type_kr": "보통결의",
+                 "legal_basis": "상법 §449·§447, §368"},
+                {"index": 2, "title": f"{meeting_date.year}년도 이사 보수 지급한도 승인의 건",
+                 "resolution_type": "ordinary", "resolution_type_kr": "보통결의",
+                 "legal_basis": "상법 §388, §368"},
+                {"index": 3, "title": f"{meeting_date.year}년 정기배당 지급 승인의 건",
+                 "resolution_type": "ordinary", "resolution_type_kr": "보통결의",
+                 "legal_basis": "상법 §462, §368"},
+            ],
+            "template_text": template_text,
+            "legal_basis": "상법 §363·§368·§373·§388·§449·§462",
+            "note": (
+                "엘비즈 표준 양식(아드폰테스 정기주총 실무 템플릿 기반). "
+                "기본 3안건 고정 — 추가·삭제 안건은 대화로 의뢰 시 수기 조정."
+            ),
+            "disclaimer": DISCLAIMER,
+        }
 
     unknown = [a for a in agenda_types if a not in AGENDA_TEMPLATES]
     if unknown:
@@ -628,6 +882,98 @@ def full_minutes(
     }
 
 
+# ─── 6) consent-form (주주 전원 기간 단축 동의서, §363⑤) ─────────────────────
+
+CONSENT_BODY_TPL = (
+    "본인 등은  주식회사 {company_name} 주주로서 정기 주주총회 기재와 같은 "
+    "의사결정을 위한 정기주주총회를 개최함에 있어서 상법 제363조 제5항 규정에 "
+    "의거 주주총회 소집통지 없이 정기주주총회를 개최함에 대하여 이의없이 동의합니다."
+)
+
+
+def _parse_shareholders(raw: str) -> list[str]:
+    """JSON 배열 또는 콤마 구분 문자열을 주주 이름 리스트로 변환."""
+    raw = (raw or "").strip()
+    if not raw:
+        return ["○○○"]
+    if raw.startswith("["):
+        try:
+            arr = json.loads(raw)
+            if isinstance(arr, list) and all(isinstance(x, str) for x in arr):
+                return [x.strip() for x in arr if x.strip()] or ["○○○"]
+        except json.JSONDecodeError:
+            pass
+    return [x.strip() for x in raw.split(",") if x.strip()] or ["○○○"]
+
+
+def consent_form(
+    company_name: str,
+    consent_date_str: str,
+    shareholders_raw: str,
+) -> dict:
+    """주주 전원 기간 단축(소집통지 생략) 동의서 생성.
+
+    - 자본금 10억 미만 + 주주 전원 동의 → 소집통지 생략(§363⑤, §363④).
+    - 복수 주주 지원 (각 주주별 서명란 반복).
+    """
+    if not company_name:
+        company_name = "○○"
+    try:
+        consent_date = (
+            datetime.strptime(consent_date_str, "%Y-%m-%d").date()
+            if consent_date_str
+            else date.today()
+        )
+    except ValueError:
+        return {"error": "consent-date 형식은 YYYY-MM-DD 이어야 합니다"}
+
+    shareholders = _parse_shareholders(shareholders_raw)
+    date_str = _format_korean_date(consent_date).replace(
+        f"{consent_date.year}. {consent_date.month}. {consent_date.day:02d}",
+        f"{consent_date.year}. {consent_date.month}. {consent_date.day:02d}",
+    )
+    # 사용자 요청대로 "YYYY. M. DD" 형식 (일은 2자리)
+    date_str = f"{consent_date.year}. {consent_date.month}. {consent_date.day:02d}"
+
+    lines: list[str] = []
+    lines.append("주 주 전 원 기 간 단 축 동 의 서")
+    lines.append("")
+    lines.append("")
+    lines.append("")
+    lines.append(CONSENT_BODY_TPL.format(company_name=company_name))
+    lines.append("")
+    lines.append("")
+    lines.append("")
+    lines.append("")
+    lines.append(date_str)
+    lines.append("")
+    lines.append("")
+    lines.append("")
+    for name in shareholders:
+        lines.append(f"주 주    {name}      (인)")
+        lines.append("")
+
+    template_text = "\n".join(lines).rstrip() + "\n"
+
+    return {
+        "mode": "consent-form",
+        "inputs": {
+            "company_name": company_name,
+            "consent_date": consent_date.isoformat(),
+            "shareholders": shareholders,
+        },
+        "shareholder_count": len(shareholders),
+        "template_text": template_text,
+        "legal_basis": "상법 §363⑤ (자본금 10억↓ 소집통지 생략 특례) · §363④ (전원 동의 시 절차 생략)",
+        "note": (
+            "자본금 10억 미만 회사에서 주주 전원이 동의하면 소집통지 없이 "
+            "정기주주총회를 개최할 수 있습니다. 본 동의서는 해당 동의 사실의 "
+            "서면 증빙으로 사용됩니다."
+        ),
+        "disclaimer": DISCLAIMER,
+    }
+
+
 # ─── CLI ─────────────────────────────────────────────────────────────────────
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -692,6 +1038,40 @@ def _build_parser() -> argparse.ArgumentParser:
                          "콤마 구분 안건 타입 리스트. 지원: "
                          + ",".join(AGENDA_TEMPLATES.keys())
                      ))
+    # lbiz-standard 전용 파라미터
+    p_f.add_argument("--day-of-week", default="", help="[lbiz-standard] 요일 (예: 목)")
+    p_f.add_argument("--meeting-time", default="", help="[lbiz-standard] 개회시각 (예: '오후 1시')")
+    p_f.add_argument("--end-time", default="", help="[lbiz-standard] 종료시각 (예: '오후 1시 50분')")
+    p_f.add_argument("--total-shares", default="", help="[lbiz-standard] 주식총수 (문자열 허용)")
+    p_f.add_argument("--total-shareholders", default="", help="[lbiz-standard] 주주총수")
+    p_f.add_argument("--present-shareholders", default="", help="[lbiz-standard] 출석주주수")
+    p_f.add_argument("--present-shares", default="", help="[lbiz-standard] 출석주식수")
+    p_f.add_argument("--chair-name", default="", help="[lbiz-standard] 의장 이름")
+    p_f.add_argument("--ceo-name", default="", help="[lbiz-standard] 대표이사 이름(의장과 다를 수 있음)")
+    p_f.add_argument("--settlement-year", type=int, default=0,
+                     help="[lbiz-standard] 결산연도(기본: 회의연도-1)")
+    p_f.add_argument("--total-comp-limit", default="",
+                     help="[lbiz-standard] 이사보수지급한도 총액 (예: '5억원')")
+    p_f.add_argument("--ceo-comp-limit", default="",
+                     help="[lbiz-standard] 대표이사 한도 (예: '3억')")
+    p_f.add_argument("--director-comp-limit", default="",
+                     help="[lbiz-standard] 이사 한도 (예: '2억5천만원')")
+    p_f.add_argument("--dividend-total", default="",
+                     help="[lbiz-standard] 배당 총액 (예: '5천만원')")
+    p_f.add_argument("--dividend-base-date", default="",
+                     help="[lbiz-standard] 배당기준일 YYYY-MM-DD")
+    p_f.add_argument("--dividend-payment-date", default="",
+                     help="[lbiz-standard] 지급시기 YYYY-MM-DD")
+
+    # consent-form
+    p_cf = sub.add_parser("consent-form",
+                          help="주주 전원 기간 단축(소집통지 생략) 동의서 생성 (§363⑤)")
+    p_cf.add_argument("--company-name", default="○○", help="회사명 (앞에 '주식회사' 자동 붙음)")
+    p_cf.add_argument("--consent-date",
+                      default=date.today().isoformat(),
+                      help="동의 날짜 YYYY-MM-DD (기본: 오늘)")
+    p_cf.add_argument("--shareholders", default="",
+                      help="주주 목록 — JSON 배열 '[\"홍길동\",\"김철수\"]' 또는 콤마 구분 '홍길동,김철수'")
 
     return parser
 
@@ -730,6 +1110,28 @@ def main(argv=None) -> int:
             company_name=args.company_name,
             address=args.address,
             agenda_types=agenda_list,
+            day_of_week=args.day_of_week,
+            meeting_time=args.meeting_time,
+            end_time=args.end_time,
+            total_shares=args.total_shares,
+            total_shareholders=args.total_shareholders,
+            present_shareholders=args.present_shareholders,
+            present_shares=args.present_shares,
+            chair_name=args.chair_name,
+            ceo_name=args.ceo_name,
+            settlement_year=args.settlement_year,
+            total_comp_limit=args.total_comp_limit,
+            ceo_comp_limit=args.ceo_comp_limit,
+            director_comp_limit=args.director_comp_limit,
+            dividend_total=args.dividend_total,
+            dividend_base_date_str=args.dividend_base_date,
+            dividend_payment_date_str=args.dividend_payment_date,
+        )
+    elif args.cmd == "consent-form":
+        result = consent_form(
+            company_name=args.company_name,
+            consent_date_str=args.consent_date,
+            shareholders_raw=args.shareholders,
         )
     else:
         print(f"Unknown command: {args.cmd}", file=sys.stderr)

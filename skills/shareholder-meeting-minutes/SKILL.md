@@ -189,9 +189,9 @@ python3 references/calculator.py full-minutes \
 
 출력 JSON의 `template_text` 필드에 복붙 가능한 완전한 의사록 텍스트가 담깁니다.
 
-## 회사 유형별 의사록 템플릿 (4종)
+## 회사 유형별 의사록 템플릿 (5종)
 
-상수님 실무 템플릿을 기반으로 회사 형태별 4종 양식을 지원합니다. `full-minutes` 모드의 `--company-type` 옵션으로 선택합니다.
+상수님 실무 템플릿을 기반으로 회사 형태별 5종 양식을 지원합니다. `full-minutes` 모드의 `--company-type` 옵션으로 선택합니다.
 
 | 유형                 | 옵션값               | 핵심 특징                                                                                                       |
 | -------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -199,6 +199,7 @@ python3 references/calculator.py full-minutes \
 | 소규모(자본금 10억↓) | `small`              | "**자본금 총액 10억 원 미만 회사로서 상법 제363조에 따라 주주총회일 10일 전에 각 주주에게 소집통지를 완료**"    |
 | 1인 주주 개최형      | `single-shareholder` | "**주주 전원의 동의에 따라 소집절차 없이 주주총회를 개최**" + "주주 ○○○가 의결권 있는 주식 ○○주 전부 보유·출석" |
 | 1인 서면결의형       | `written-resolution` | 제목 "**주주총회 결의서**" + "**상법 제363조 제5항에 따라 아래 사항에 대하여 서면으로 동의**" — 개회·폐회 생략  |
+| ⭐ 엘비즈 표준       | `lbiz-standard`      | 상수님 실무에서 실제 사용하시는 정기주총 의사록 양식 — 자간 띄어쓰기 제목, 기본 3안건(재무제표·보수한도·배당)   |
 
 ### 호출 예시 4종
 
@@ -223,6 +224,87 @@ python3 references/calculator.py full-minutes \
   --company-type written-resolution --meeting-type regular --fiscal-year 10 \
   --agenda-types financial-statement,dividend
 ```
+
+## ⭐ 엘비즈 표준 양식 (lbiz-standard)
+
+상수님이 실무에서 실제 사용하시는 정기주총 의사록 양식입니다. 아드폰테스 2024년 정기주주총회 의사록 원본을 그대로 재현한 유형으로, `--company-type lbiz-standard` 옵션으로 호출합니다.
+
+### 원본 양식 특징
+
+- **제목**: "제 N 기 정 기 주 주 총 회 의 사 록" — 자간 띄어쓰기 적용
+- **의장 등단**: "의장은 정각 ○시에 등단하여 개회를 선언하다." 고정 문구
+- **이사 보수한도**: 대표이사 한도 + 이사(대표이사 외) 한도를 2단으로 분리 기재
+- **정기배당**: 배당총액 + 배당기준일 + 지급시기까지 구체적으로 명시
+- **별첨**: 별첨1(재무상태표·손익계산서·이익잉여금처분계산서) + 별첨2(정기배당 결의서) 2종
+
+### 필수 파라미터
+
+| 파라미터                  | 설명                    | 예시              |
+| ------------------------- | ----------------------- | ----------------- |
+| `--fiscal-year`           | 기수(숫자)              | `10`              |
+| `--company-name`          | 회사명                  | `"○○"`            |
+| `--meeting-date`          | 총회일(YYYY-MM-DD)      | `2026-03-15`      |
+| `--day-of-week`           | 요일(한글 1자)          | `일`              |
+| `--meeting-time`          | 개회 시각               | `"오후 1시"`      |
+| `--end-time`              | 폐회 시각               | `"오후 1시 50분"` |
+| `--total-shares`          | 발행주식 총수           | `2000`            |
+| `--total-shareholders`    | 주주 총수               | `1`               |
+| `--present-shareholders`  | 출석 주주 수            | `1`               |
+| `--present-shares`        | 출석 주식 수            | `2000`            |
+| `--chair-name`            | 의장 이름               | `"홍길동"`        |
+| `--ceo-name`              | 대표이사 이름           | `"홍길동"`        |
+| `--total-comp-limit`      | 이사 보수한도 총액      | `"5억원"`         |
+| `--ceo-comp-limit`        | 대표이사 보수한도       | `"3억"`           |
+| `--director-comp-limit`   | 이사(대표 외) 보수한도  | `"2억5천만원"`    |
+| `--dividend-total`        | 배당 총액               | `"5천만원"`       |
+| `--dividend-base-date`    | 배당기준일(YYYY-MM-DD)  | `2025-12-31`      |
+| `--dividend-payment-date` | 배당 지급일(YYYY-MM-DD) | `2026-04-17`      |
+| `--settlement-year`       | 결산연도(연도)          | `2025`            |
+
+### 호출 예시
+
+```bash
+python3 skills/shareholder-meeting-minutes/references/calculator.py full-minutes \
+  --company-type lbiz-standard \
+  --fiscal-year 10 \
+  --company-name "○○" \
+  --meeting-date 2026-03-15 --day-of-week 일 \
+  --meeting-time "오후 1시" --end-time "오후 1시 50분" \
+  --total-shares 2000 --total-shareholders 1 \
+  --present-shareholders 1 --present-shares 2000 \
+  --chair-name "홍길동" --ceo-name "홍길동" \
+  --total-comp-limit "5억원" --ceo-comp-limit "3억" --director-comp-limit "2억5천만원" \
+  --dividend-total "5천만원" \
+  --dividend-base-date 2025-12-31 --dividend-payment-date 2026-04-17 \
+  --settlement-year 2025
+```
+
+출력 JSON의 `template_text` 필드에 완성된 의사록 전문이 담깁니다.
+
+## 소집 기간 단축 동의서 (consent-form)
+
+자본금 10억 미만 회사에서 주주 전원이 동의하면 상법 §363⑤에 따라 소집통지 절차를 생략할 수 있습니다. 이때 첨부하는 동의서를 `consent-form` 모드로 생성합니다.
+
+### 원본 양식 특징
+
+- **제목**: "주 주 전 원 기 간 단 축 동 의 서" — 자간 띄어쓰기 적용
+- **근거**: 상법 제363조 제5항 명시
+- **서명란**: 주주 수에 따라 자동으로 확장 (1인~복수)
+
+### 호출 예시
+
+```bash
+# 1인 주주
+python3 skills/shareholder-meeting-minutes/references/calculator.py consent-form \
+  --company-name "○○" --consent-date 2026-03-15 --shareholders "홍길동"
+
+# 복수 주주 (쉼표 구분)
+python3 skills/shareholder-meeting-minutes/references/calculator.py consent-form \
+  --company-name "○○" --consent-date 2026-03-15 \
+  --shareholders "홍길동,김철수,이영희"
+```
+
+출력 JSON의 `template_text` 필드에 완성된 동의서 전문이 담깁니다.
 
 ## 임시주주총회 템플릿
 
@@ -252,6 +334,28 @@ python3 references/calculator.py full-minutes \
   --meeting-date 2026-08-15 \
   --agenda-types ceo-appointment,headquarters-relocation
 ```
+
+## 되묻기 규칙
+
+상수님이 "주주총회 의사록 만들어줘" 또는 "lbiz-standard 양식으로 작성해줘"라고 요청하면 아래 5단계 순서로 정보를 수집한 뒤 생성합니다.
+
+### lbiz-standard 양식 요청 시 5단계 대화
+
+1. **회사명 · 기수** — 회사명과 몇 기 정기주총인지 확인 (예: "제10기")
+2. **일시(요일 포함) · 장소** — 총회 개최 날짜(요일 포함), 개회 시각, 폐회 시각, 장소
+3. **출석현황** — 발행주식 총수, 주주 총수, 출석 주주 수, 출석 주식 수
+4. **의장·대표이사 이름** — 동일인인지 확인 (다른 경우 각각 확인)
+5. **기본 3안건 제시 후 가감 확인**:
+   - 제1호 재무제표 승인 (기본 포함) — 결산연도 확인
+   - 제2호 이사 보수한도 (대표이사 한도 + 이사 한도 각각 입력 필요)
+   - 제3호 정기배당 (총액 + 배당기준일 + 지급시기 입력 필요)
+   - "빼거나 추가할 안건 있나요? (예: 정관변경, 이사 선임)"
+
+> 💡 **소집 기간 단축 동의서** 필요 여부도 함께 확인할 것 (자본금 10억 미만 회사인 경우 자동 제안).
+
+### 재무제표 업로드 로드맵 안내 (향후)
+
+현재는 수동 입력 방식입니다. 추후 엑셀(xlsx) 파싱으로 재무상태표·손익계산서·이익잉여금처분계산서 수치를 자동으로 채워 넣는 기능을 추가할 예정입니다.
 
 ## 안건별 표준 문구 예시 (상수님 제공)
 
@@ -317,3 +421,4 @@ python3 references/calculator.py full-minutes \
 | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-04-14 | 상수님 | 초기 작성 및 검증 완료. 근거: 상법 §363·§363의2·§366·§368·§368의3·§368의4·§369·§373·§374·§383·§434 조문 및 정기주총 실무 안건(재무제표 승인·배당결의·임원 보수한도 등 7종). 법무 카테고리 두 번째 스킬.                                                                                                                                                 |
 | 2026-04-14 | 상수님 | 상수님 제공 의사록 템플릿 4종(비상장 일반·소규모·1인 개최형·1인 서면결의형) + 임시주총 양식 + 안건별 표준 문구(이사 선임·정관변경·본점이전 등) + 작성 포인트(배당·재무제표·보수한도·등기 연결·기명날인) 반영. `full-minutes` 모드 신설 + `agenda-template` 5종 추가(ceo-appointment·headquarters-relocation·capital-reduction·director-removal·merger). |
+| 2026-04-15 | 상수님 | 상수님 제공 실제 양식(아드폰테스 2024년 정기주총 의사록 + 기간단축 동의서) 기반 lbiz-standard 유형 내장·consent-form 모드 신설.                                                                                                                                                                                                                         |
