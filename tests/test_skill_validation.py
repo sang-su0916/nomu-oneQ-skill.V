@@ -733,6 +733,48 @@ SCENARIOS = [
         "assert": lambda r: r["deduction_rate"] == 0.16,
         "desc": "일반 표1 보유 10년 → (10-2)×2%p = 16%",
     },
+    # acquisition-tax (세무 — 지방세법 §11, §13의2)
+    {
+        "id": "ACQ-01",
+        "skill": "acquisition-tax",
+        "args": ["general", "--acquisition-price", "500000000", "--area-sqm", "84"],
+        "assert": lambda r: r["applied_rate"] == 0.01 and r["acquisition_tax"] == 5000000,
+        "desc": "유상 주택 5억 → 1% → 취득세 500만원 (§11①8)",
+    },
+    {
+        "id": "ACQ-02",
+        "skill": "acquisition-tax",
+        "args": ["general", "--acquisition-price", "1200000000", "--area-sqm", "110"],
+        "assert": lambda r: r["applied_rate"] == 0.03 and r["acquisition_tax"] == 36000000,
+        "desc": "유상 주택 12억 → 3% → 취득세 3,600만원 (§11①8)",
+    },
+    {
+        "id": "ACQ-03",
+        "skill": "acquisition-tax",
+        "args": ["corporate", "--acquisition-price", "1000000000", "--area-sqm", "84"],
+        "assert": lambda r: r["applied_rate"] == 0.12 and r["acquisition_tax"] == 120000000,
+        "desc": "법인 주택 10억 → 12% → 취득세 1.2억 (§13의2)",
+    },
+    {
+        "id": "ACQ-04",
+        "skill": "acquisition-tax",
+        "args": [
+            "multi-home",
+            "--acquisition-price", "1000000000",
+            "--home-count", "3",
+            "--in-adjusted-area",
+            "--area-sqm", "84",
+        ],
+        "assert": lambda r: r["applied_rate"] == 0.12 and r["heavy_tax_applied"] is True,
+        "desc": "조정지역 1세대3주택 10억 → 12% 중과 (§13의2)",
+    },
+    {
+        "id": "ACQ-05",
+        "skill": "acquisition-tax",
+        "args": ["general", "--acquisition-price", "750000000", "--area-sqm", "84"],
+        "assert": lambda r: r["applied_rate"] == 0.02 and r["acquisition_tax"] == 15000000,
+        "desc": "6~9억 구간 7.5억 → 공식세율 2% → 취득세 1,500만원 (§11①8)",
+    },
     # year-end-settlement (세무 — 2026 귀속)
     {
         "id": "YES-01",
@@ -773,6 +815,111 @@ SCENARIOS = [
         "args": ["deduction-table"],
         "assert": lambda r: len(r.get("items", [])) >= 10,
         "desc": "deduction-table 최소 10개 공제 항목 포함",
+    },
+    # inheritance-gift-tax (세무 — 상속·증여)
+    {
+        "id": "IGT-01",
+        "skill": "inheritance-gift-tax",
+        "args": [
+            "inheritance",
+            "--estate", "2000000000",
+            "--spouse-deduction", "500000000",
+            "--lump-sum-deduction", "500000000",
+        ],
+        "assert": lambda r: r["taxable_base"] == 1000000000 and r["calculated_tax"] == 240000000,
+        "desc": "상속 20억·배우자 5억·일괄 5억 → 과세 10억 → 산출 2.4억 (10억×30%-6천만)",
+    },
+    {
+        "id": "IGT-02",
+        "skill": "inheritance-gift-tax",
+        "args": [
+            "gift",
+            "--gift-amount", "100000000",
+            "--relation", "lineal-descendant",
+        ],
+        "assert": lambda r: (
+            r["applied_deduction"] == 50000000
+            and r["taxable_base"] == 50000000
+            and r["calculated_tax"] == 5000000
+        ),
+        "desc": "직계비속 증여 1억 → §53 공제 5천만 → 과세 5천만 → 산출 500만",
+    },
+    {
+        "id": "IGT-03",
+        "skill": "inheritance-gift-tax",
+        "args": [
+            "marriage-birth",
+            "--gift-amount", "150000000",
+            "--marriage-deduction", "100000000",
+        ],
+        "assert": lambda r: (
+            r["relation_deduction"]["applied"] == 50000000
+            and r["marriage_birth_deduction"]["total_applied"] == 100000000
+            and r["taxable_base"] == 0
+            and r["calculated_tax"] == 0
+        ),
+        "desc": "혼인 전 직계존속 증여 1.5억 → §53 5천만 + §53의2 1억 = 1.5억 공제 → 과세 0",
+    },
+    {
+        "id": "IGT-04",
+        "skill": "inheritance-gift-tax",
+        "args": [
+            "marriage-birth",
+            "--gift-amount", "250000000",
+            "--marriage-deduction", "100000000",
+            "--birth-deduction", "100000000",
+        ],
+        "assert": lambda r: (
+            r["marriage_birth_deduction"]["sum_requested"] == 200000000
+            and r["marriage_birth_deduction"]["total_applied"] == 100000000
+            and len(r.get("warnings", [])) >= 1
+        ),
+        "desc": "혼인 1억 + 출산 1억 합산 2억 요청 → §53의2③ 1억 한도 적용, warnings 출력",
+    },
+    # comprehensive-real-estate-tax (세무 — 종합부동산세)
+    {
+        "id": "CRE-01",
+        "skill": "comprehensive-real-estate-tax",
+        "args": ["single-home-senior", "--published-price", "2000000000"],
+        "assert": lambda r: r["tax_base"] == 480000000 and r["base_tax"] == 2760000 and r["tax"] == 2760000,
+        "desc": "1세대1주택 공시 20억·공제없음 → 과표 4.8억·기본세액 276만 (150만+1.8억×0.7%)",
+    },
+    {
+        "id": "CRE-02",
+        "skill": "comprehensive-real-estate-tax",
+        "args": ["household", "--published-price", "3000000000"],
+        "assert": lambda r: r["tax_base"] == 1260000000 and r["tax"] == 10380000,
+        "desc": "2주택 공시 합 30억 일반 → 과표 12.6억·세액 1,038만 (960만+0.6억×1.3%)",
+    },
+    {
+        "id": "CRE-03",
+        "skill": "comprehensive-real-estate-tax",
+        "args": ["multi-home", "--published-price", "3000000000"],
+        "assert": lambda r: r["tax_base"] == 1260000000 and r["tax"] == 10800000 and r["marginal_rate"] == 0.020,
+        "desc": "3주택 공시 합 30억 → 과표 12.6억·12억 초과 2.0% 중과 → 세액 1,080만 (960만+0.6억×2.0%)",
+    },
+    {
+        "id": "CRE-04",
+        "skill": "comprehensive-real-estate-tax",
+        "args": ["corporate", "--published-price", "2000000000"],
+        "assert": lambda r: r["tax_base"] == 1200000000 and r["tax"] == 32400000 and r["applied_rate"] == 0.027,
+        "desc": "법인 2주택 공시 20억·공제 0 → 과표 12억 × 2.7% = 3,240만",
+    },
+    {
+        "id": "CRE-05",
+        "skill": "comprehensive-real-estate-tax",
+        "args": [
+            "single-home-senior",
+            "--published-price", "2000000000",
+            "--age", "70",
+            "--holding-years", "10",
+        ],
+        "assert": lambda r: (
+            r["base_tax"] == 2760000
+            and r["combined_credit_rate"] == 0.80
+            and r["tax"] == 552000
+        ),
+        "desc": "1세대1주택 70세·10년 보유 공시 20억 → 기본 276만 × 20%(한도 80%) = 55.2만",
     },
 ]
 
