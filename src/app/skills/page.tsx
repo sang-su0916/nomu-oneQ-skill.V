@@ -326,6 +326,30 @@ const SKILLS = [
     accentText: "#701a75",
   },
   {
+    id: "shareholder-meeting-minutes",
+    emoji: "📜",
+    title: "주주총회의사록",
+    subtitle: "상법 결의 정족수·소집통지·의사록 작성",
+    description:
+      "보통결의(1/4+1/2) · 특별결의(1/3+2/3) 정족수 판정, 소집통지 마감 계산 (자본금 10억 기준), 의사록 §373 필수 기재사항 체크, 정기주총 전형 안건 7종 템플릿",
+    triggers: [
+      "주주총회",
+      "의사록",
+      "결의정족수",
+      "보통결의",
+      "특별결의",
+      "소집통지",
+      "정기주총",
+      "임시주총",
+    ],
+    triggerExample: "제10기 정기주총 — 재무제표 승인·이사 보수한도 의사록 써줘",
+    resultExample:
+      "보통결의 정족수 충족 / 소집통지 2주 전 기준일 안내 / §373 9항목 체크 / 안건별 표준 문구 생성",
+    source: "상법 §363·§368·§373·§374·§434",
+    accentColor: "#fae8ff",
+    accentText: "#701a75",
+  },
+  {
     id: "minimum-wage",
     emoji: "💰",
     title: "최저임금 위반 체크",
@@ -917,7 +941,7 @@ export default function SkillsPage() {
             <p>
               한국 비즈니스 도메인(노무·세무·법무·경영)의 계산·판정·검토를
               <br />
-              Claude가 정확하게 수행하도록 훈련된 27개 스킬 모음입니다.
+              Claude가 정확하게 수행하도록 훈련된 28개 스킬 모음입니다.
             </p>
           </div>
         </section>
@@ -976,7 +1000,7 @@ export default function SkillsPage() {
         {/* Skill Cards */}
         <section className="skills-grid-section">
           <h2 className="skills-grid-title">
-            27개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 9 · 법무 1 · 경영 7)
+            28개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 9 · 법무 2 · 경영 7)
           </h2>
           <p className="skills-grid-subtitle">
             키워드를 포함한 질문을 입력하면 해당 스킬이 자동으로 활성화됩니다.

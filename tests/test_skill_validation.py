@@ -921,6 +921,76 @@ SCENARIOS = [
         ),
         "desc": "1세대1주택 70세·10년 보유 공시 20억 → 기본 276만 × 20%(한도 80%) = 55.2만",
     },
+    # shareholder-meeting-minutes (법무 — 주주총회 의사록)
+    {
+        "id": "SMM-01",
+        "skill": "shareholder-meeting-minutes",
+        "args": [
+            "quorum", "--type", "ordinary",
+            "--total-shares", "1000", "--present-shares", "600",
+            "--affirmative-shares", "400",
+        ],
+        "assert": lambda r: (
+            r["passed"] is True
+            and r["present_requirement"]["met"] is True
+            and r["total_requirement"]["met"] is True
+            and r["resolution_type"] == "ordinary"
+        ),
+        "desc": "보통결의 가결: 발행 1000·출석 600·찬성 400 (출석 과반 300초과 ✓, 총수 1/4=250 ✓)",
+    },
+    {
+        "id": "SMM-02",
+        "skill": "shareholder-meeting-minutes",
+        "args": [
+            "quorum", "--type", "special",
+            "--total-shares", "1000", "--present-shares", "500",
+            "--affirmative-shares", "335",
+        ],
+        "assert": lambda r: (
+            r["passed"] is True
+            and r["present_requirement"]["met"] is True
+            and r["total_requirement"]["met"] is True
+        ),
+        "desc": "특별결의 가결(경계값): 발행 1000·출석 500·찬성 335 (출석 2/3=333.3 ✓, 총수 1/3=333.3 ✓)",
+    },
+    {
+        "id": "SMM-03",
+        "skill": "shareholder-meeting-minutes",
+        "args": [
+            "quorum", "--type", "special",
+            "--total-shares", "1000", "--present-shares", "500",
+            "--affirmative-shares", "330",
+        ],
+        "assert": lambda r: (
+            r["passed"] is False
+            and r["present_requirement"]["met"] is False
+            and r["total_requirement"]["met"] is False
+        ),
+        "desc": "특별결의 부결: 발행 1000·출석 500·찬성 330 (출석 2/3=333.3 미달, 총수 1/3 미달)",
+    },
+    {
+        "id": "SMM-04",
+        "skill": "shareholder-meeting-minutes",
+        "args": ["notice-deadline", "--meeting-date", "2026-05-15"],
+        "assert": lambda r: (
+            r["notice_days"] == 14
+            and r["deadline_date"] == "2026-05-01"
+        ),
+        "desc": "소집통지 마감(일반): 주총 2026-05-15, 자본금 10억+ → 2026-05-01 (14일 전)",
+    },
+    {
+        "id": "SMM-05",
+        "skill": "shareholder-meeting-minutes",
+        "args": [
+            "notice-deadline", "--meeting-date", "2026-05-15",
+            "--capital-under-1bn",
+        ],
+        "assert": lambda r: (
+            r["notice_days"] == 10
+            and r["deadline_date"] == "2026-05-05"
+        ),
+        "desc": "소집통지 마감(소규모): 주총 2026-05-15, 자본금 10억↓ → 2026-05-05 (10일 전, §363⑤)",
+    },
 ]
 
 
