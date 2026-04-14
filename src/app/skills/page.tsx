@@ -70,6 +70,29 @@ const SKILLS = [
     accentText: "#713f12",
   },
   {
+    id: "withholding-tax",
+    emoji: "💸",
+    title: "원천징수",
+    subtitle: "사업·기타·이자·일용 5모드",
+    description:
+      "소득세법 §129 기준 사업소득(3.3%)·기타소득(유형별 필요경비 의제)·이자배당(15.4%)·일용근로(일급 15만 공제 후 6%×45%) 원천징수. 상용 근로는 간이세액표 안내.",
+    triggers: [
+      "원천징수",
+      "사업소득",
+      "기타소득",
+      "일용근로",
+      "강연료",
+      "이자배당",
+      "3.3%",
+    ],
+    triggerExample: "강연료 100만 원 지급할 때 원천징수 얼마 떼야 해?",
+    resultExample:
+      "(100만 - 60만 필요경비) × 20% = 8만 + 지방세 8천 = 총 88,000원 (실효 8.8%)",
+    source: "소득세법 §129·§21·§47·§134, 시행령 §87",
+    accentColor: "#fef2f2",
+    accentText: "#7f1d1d",
+  },
+  {
     id: "severance-pay",
     emoji: "💼",
     title: "퇴직금 계산",
@@ -838,7 +861,7 @@ export default function SkillsPage() {
         {/* Skill Cards */}
         <section className="skills-grid-section">
           <h2 className="skills-grid-title">
-            21개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 3 · 법무 1 · 경영 7)
+            22개 스킬 카탈로그 (메타 1 · 노무 9 · 세무 4 · 법무 1 · 경영 7)
           </h2>
           <p className="skills-grid-subtitle">
             키워드를 포함한 질문을 입력하면 해당 스킬이 자동으로 활성화됩니다.

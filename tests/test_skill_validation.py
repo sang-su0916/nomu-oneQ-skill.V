@@ -623,6 +623,55 @@ SCENARIOS = [
         "assert": lambda r: r["eligible"] is False and any("1억 400만원" in x for x in r["reasons"]),
         "desc": "eligibility 직전연도 1.5억·개인 → 부적격 (1억 400만원 초과)",
     },
+    # withholding-tax (세무·노무 교차)
+    {
+        "id": "WHT-01",
+        "skill": "withholding-tax",
+        "args": ["business", "--payment", "1000000"],
+        "assert": lambda r: r["total_withholding"] == 33000 and r["income_tax"] == 30000 and r["local_tax"] == 3000,
+        "desc": "사업소득 100만 지급 → 3.3% = 33,000 (소득세 30,000 + 지방세 3,000)",
+    },
+    {
+        "id": "WHT-02",
+        "skill": "withholding-tax",
+        "args": ["other", "--payment", "1000000", "--type", "lecture"],
+        "assert": lambda r: (
+            r["taxable_income"] == 400000
+            and r["total_withholding"] == 88000
+            and r["income_tax"] == 80000
+            and r["local_tax"] == 8000
+        ),
+        "desc": "기타소득 강연료 100만 (60% 의제) → 과세표준 40만, 원천 88,000 (실효 8.8%)",
+    },
+    {
+        "id": "WHT-03",
+        "skill": "withholding-tax",
+        "args": ["interest-dividend", "--amount", "10000000"],
+        "assert": lambda r: r["total_withholding"] == 1540000 and r["income_tax"] == 1400000 and r["local_tax"] == 140000,
+        "desc": "이자·배당 1천만 → 15.4% = 1,540,000",
+    },
+    {
+        "id": "WHT-04",
+        "skill": "withholding-tax",
+        "args": ["daily-worker", "--daily-wage", "200000"],
+        "assert": lambda r: (
+            r["income_tax_per_day"] == 1350
+            and r["local_tax_per_day"] == 135
+            and r["total_per_day"] == 1485
+            and r["exempt_from_withholding"] is False
+        ),
+        "desc": "일용 일급 20만 → 과세 5만 × 2.7% = 1,350 (소득세) + 135 (지방) = 1,485",
+    },
+    {
+        "id": "WHT-05",
+        "skill": "withholding-tax",
+        "args": ["daily-worker", "--daily-wage", "150000"],
+        "assert": lambda r: (
+            r["total_per_day"] == 0
+            and r["exempt_from_withholding"] is True
+        ),
+        "desc": "일용 일급 15만 이하 → 비과세 (total_per_day = 0)",
+    },
 ]
 
 

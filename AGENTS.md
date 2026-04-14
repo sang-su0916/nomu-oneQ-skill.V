@@ -30,13 +30,14 @@
 | **weekly-holiday-pay**    | 주휴수당                | 주휴, 주휴수당, 개근      |
 | **overtime-pay**          | 연장·야간·휴일 가산수당 | 연장근로, 야간, 휴일근로  |
 
-## 🏛 세무 스킬 (3)
+## 🏛 세무 스킬 (4)
 
 | 스킬                              | 설명                                  | 트리거                                                |
 | --------------------------------- | ------------------------------------- | ----------------------------------------------------- |
 | **income-tax**                    | 종합소득세 (누진세율 8단계)           | 종합소득세, 소득세, 세율                              |
 | **corporate-tax-interim-payment** | 법인세 중간예납                       | 법인세중간예납, 중간예납, §63, 가결산 방식, 8월 신고  |
 | **value-added-tax**               | 부가가치세 (일반·간이·적격 판정·비교) | 부가세, 부가가치세, 간이과세, 일반과세, VAT, 매입세액 |
+| **withholding-tax**               | 원천징수 (사업·기타·이자·일용·근로)   | 원천징수, 사업소득, 기타소득, 일용근로, 강연료, 3.3%  |
 
 ## ⚖️ 법무 스킬 (1)
 
@@ -72,6 +73,9 @@ skills/
 │   ├── SKILL.md
 │   └── references/calculator.py
 ├── value-added-tax/
+│   ├── SKILL.md
+│   └── references/calculator.py
+├── withholding-tax/
 │   ├── SKILL.md
 │   └── references/calculator.py
 ├── severance-pay/
